@@ -1,16 +1,16 @@
 import type { ThirdwebClient } from "../../../../client/client.js";
 import { getThirdwebBaseUrl } from "../../../../utils/domains.js";
-import type { SocialAuthOption } from "../../../../wallets/types.js";
+import type { AuthOption } from "../../../../wallets/types.js";
 import type { Ecosystem } from "../../web/types.js";
 
-export const getSocialAuthLoginPath = ({
+export const getLoginPath = ({
   authOption,
   client,
   ecosystem,
   mode = "popup",
   redirectUrl,
 }: {
-  authOption: SocialAuthOption;
+  authOption: AuthOption;
   client: ThirdwebClient;
   ecosystem?: Ecosystem;
   mode?: "popup" | "redirect" | "mobile";
@@ -38,4 +38,21 @@ export const getSocialAuthLoginPath = ({
   }
 
   return baseUrl;
+};
+
+// Can we delete these and use the above instead?
+export const getOtpLoginUrl = ({
+  authOption,
+}: {
+  authOption: AuthOption;
+}): string => {
+  return `${getThirdwebBaseUrl("inAppWallet")}/api/2024-05-05/login/${authOption}`;
+};
+
+export const getOtpVerifyUrl = ({
+  authOption,
+}: {
+  authOption: AuthOption;
+}): string => {
+  return `${getThirdwebBaseUrl("inAppWallet")}/api/2024-05-05/login/${authOption}/callback`;
 };
