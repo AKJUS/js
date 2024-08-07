@@ -108,6 +108,9 @@ export function smartWallet(
     id: "smart",
     subscribe: emitter.subscribe,
     getChain: () => chain,
+    updateChain(c) {
+      chain = c;
+    },
     getConfig: () => createOptions,
     getAccount: () => account,
     autoConnect: async (options) => {

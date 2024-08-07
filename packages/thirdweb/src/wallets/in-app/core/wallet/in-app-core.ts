@@ -46,6 +46,9 @@ export function createInAppWallet(args: {
     id: "inApp",
     subscribe: emitter.subscribe,
     getChain: () => chain,
+    updateChain(c) {
+      chain = c;
+    },
     getConfig: () => createOptions,
     getAccount: () => account,
     autoConnect: async (options) => {

@@ -364,6 +364,9 @@ export function createWallet<const ID extends WalletId>(
           await handleDisconnect();
         },
         switchChain: (c) => handleSwitchChain(c),
+        updateChain(c) {
+          chain = c;
+        },
       };
       return wallet;
     }

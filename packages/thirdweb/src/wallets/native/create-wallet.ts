@@ -122,6 +122,9 @@ export function createWallet<const ID extends WalletId>(
         subscribe: emitter.subscribe,
         getConfig: () => args[1],
         getChain: () => chain,
+        updateChain(c) {
+          chain = c;
+        },
         getAccount: () => account,
         autoConnect: async (
           options: WalletAutoConnectionOption<WCSupportedWalletIds>,

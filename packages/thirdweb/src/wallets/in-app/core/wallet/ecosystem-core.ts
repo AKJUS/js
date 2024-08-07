@@ -30,6 +30,9 @@ export function createEcosystemWallet(args: {
     subscribe: emitter.subscribe,
     getChain: () => chain,
     getConfig: () => createOptions,
+    updateChain(c) {
+      chain = c;
+    },
     getAccount: () => account,
     autoConnect: async (options) => {
       const { autoConnectInAppWallet } = await import("./index.js");

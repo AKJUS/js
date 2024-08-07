@@ -1,4 +1,5 @@
 import type { Chain } from "../../chains/types.js";
+import { cacheChains } from "../../chains/utils.js";
 import type { ThirdwebClient } from "../../client/client.js";
 import { hasSmartAccount } from "../../react/core/utils/isSmartWallet.js";
 import { computedStore } from "../../reactive/computedStore.js";
@@ -45,6 +46,30 @@ export function createConnectionManager(storage: AsyncStorage) {
   const activeWalletConnectionStatusStore =
     createStore<ConnectionStatus>("disconnected");
 
+  const definedChainsStore = createStore<Map<number, Chain>>(new Map());
+
+  // update global cachedChains when defined Chains store updates
+  effect(() => {
+    cacheChains([...definedChainsStore.getValue().values()]);
+  }, [definedChainsStore]);
+
+  // change the active chain object to use the defined chain object
+  effect(() => {
+    const chainVal = activeWalletChainStore.getValue();
+    if (!chainVal) {
+      return;
+    }
+
+    const definedChain = definedChainsStore.getValue().get(chainVal.id);
+
+    if (!definedChain || definedChain === chainVal) {
+      return;
+    }
+
+    // update active chain store
+    activeWalletChainStore.setValue(definedChain);
+  }, [definedChainsStore, activeWalletChainStore]);
+
   // other connected accounts
   const walletIdToConnectedWalletMap =
     createStore<WalletIdToConnectedWalletMap>(new Map());
@@ -54,6 +79,21 @@ export function createConnectionManager(storage: AsyncStorage) {
   const connectedWallets = computedStore(() => {
     return Array.from(walletIdToConnectedWalletMap.getValue().values());
   }, [walletIdToConnectedWalletMap]);
+
+  // update chain objects in all connected wallets
+  effect(() => {
+    const wallets = connectedWallets.getValue();
+    const definedChains = definedChainsStore.getValue();
+    for (const w of wallets) {
+      const chain = w.getChain();
+      if (chain) {
+        const definedChain = definedChains.get(chain.id);
+        if (definedChain && definedChain !== chain) {
+          w.updateChain(definedChain || chain);
+        }
+      }
+    }
+  }, [definedChainsStore, connectedWallets]);
 
   // actions
   const addConnectedWallet = (wallet: Wallet) => {
@@ -241,21 +281,42 @@ export function createConnectionManager(storage: AsyncStorage) {
     activeWalletChainStore.setValue(wallet.getChain());
   };
 
+  function defineChains(chains: Chain[]) {
+    const currentMapVal = definedChainsStore.getValue();
+
+    // if all chains to be defined are already defined, no need to update the definedChains map
+    const allChainsSame = chains.every((c) => {
+      const definedChain = currentMapVal.get(c.id);
+      // basically a deep equal check
+      return JSON.stringify(definedChain) === JSON.stringify(c);
+    });
+
+    if (allChainsSame) {
+      return;
+    }
+
+    const newMapVal = new Map(currentMapVal);
+    for (const c of chains) {
+      newMapVal.set(c.id, c);
+    }
+    definedChainsStore.setValue(newMapVal);
+  }
+
   return {
-    // account
-    activeWalletStore: activeWalletStore,
-    activeAccountStore: activeAccountStore,
+    activeWalletStore,
+    activeAccountStore,
     connectedWallets,
     addConnectedWallet,
     disconnectWallet,
     setActiveWallet,
     connect,
     handleConnection,
-    activeWalletChainStore: activeWalletChainStore,
+    activeWalletChainStore,
     switchActiveWalletChain,
-    activeWalletConnectionStatusStore: activeWalletConnectionStatusStore,
+    activeWalletConnectionStatusStore,
     isAutoConnecting,
     removeConnectedWallet,
+    defineChains,
   };
 }
 

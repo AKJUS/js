@@ -71,6 +71,9 @@ export function createWalletAdapter(
     getChain() {
       return _chain;
     },
+    updateChain(c) {
+      _chain = c;
+    },
     getConfig() {
       return options;
     },
