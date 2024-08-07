@@ -1,5 +1,11 @@
 # thirdweb
 
+## 5.44.2
+
+### Patch Changes
+
+- [#3986](https://github.com/thirdweb-dev/js/pull/3986) [`4d0e00a`](https://github.com/thirdweb-dev/js/commit/4d0e00a7c41746fec740c889362f84eada536ffb) Thanks [@jarrodwatts](https://github.com/jarrodwatts)! - add abstract l2 chain definition (ZKSync ZK stack)
+
 ## 5.44.1
 
 ### Patch Changes
