@@ -140,12 +140,6 @@ export type Wallet<TWalletId extends WalletId = WalletId> = {
    * Can be used to execute any pre-connection actions like showing a modal, etc.
    */
   onConnectRequested?: () => Promise<void>;
-
-  /**
-   * Update stored chain object
-   * @internal
-   */
-  updateChain: (chain: Chain) => void;
 };
 
 /**

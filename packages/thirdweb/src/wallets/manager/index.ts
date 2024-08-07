@@ -80,21 +80,6 @@ export function createConnectionManager(storage: AsyncStorage) {
     return Array.from(walletIdToConnectedWalletMap.getValue().values());
   }, [walletIdToConnectedWalletMap]);
 
-  // update chain objects in all connected wallets
-  effect(() => {
-    const wallets = connectedWallets.getValue();
-    const definedChains = definedChainsStore.getValue();
-    for (const w of wallets) {
-      const chain = w.getChain();
-      if (chain) {
-        const definedChain = definedChains.get(chain.id);
-        if (definedChain && definedChain !== chain) {
-          w.updateChain(definedChain || chain);
-        }
-      }
-    }
-  }, [definedChainsStore, connectedWallets]);
-
   // actions
   const addConnectedWallet = (wallet: Wallet) => {
     const oldValue = walletIdToConnectedWalletMap.getValue();
