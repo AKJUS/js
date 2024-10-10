@@ -22,7 +22,7 @@ import type { ThirdwebNextPage } from "utils/types";
 import chakraTheme from "../theme";
 import "@/styles/globals.css";
 import { DashboardRouterTopProgressBar } from "@/lib/DashboardRouter";
-import { AnnouncementBanner } from "../components/notices/AnnouncementBanner";
+import { UnlimitedWalletsBanner } from "../components/notices/AnnouncementBanner";
 
 const inter = interConstructor({
   subsets: ["latin"],
@@ -260,10 +260,10 @@ const ConsoleApp = memo(function ConsoleApp({
       />
 
       <DashboardRouterTopProgressBar />
+      <UnlimitedWalletsBanner />
 
       <TailwindTheme>
         <ChakraProvider theme={chakraThemeWithFonts}>
-          <AnnouncementBanner />
           {isFallback && Component.fallback
             ? Component.fallback
             : getLayout(<Component {...pageProps} />, pageProps)}

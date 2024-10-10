@@ -1,3 +1,4 @@
+import { DashboardTypeCookieSetter } from "@/components/DashboardTypeCookieSetter";
 import { AppFooter } from "@/components/blocks/app-footer";
 import { TWAutoConnect } from "../../components/autoconnect";
 
@@ -10,6 +11,7 @@ export default function RootTeamLayout(props: {
       <div className="flex grow flex-col">{props.children}</div>
       <TWAutoConnect />
       <AppFooter />
+      <DashboardTypeCookieSetter type="team" />
     </div>
   );
 }

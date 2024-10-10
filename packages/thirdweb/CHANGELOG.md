@@ -1,5 +1,41 @@
 # thirdweb
 
+## 5.61.5
+
+### Patch Changes
+
+- [#4979](https://github.com/thirdweb-dev/js/pull/4979) [`ccd4cd6`](https://github.com/thirdweb-dev/js/commit/ccd4cd6f59423d417757e86bf04a5a07b061e2f9) Thanks [@joaquim-verges](https://github.com/joaquim-verges)! - Overestimate zksync gas limit to account for paymaster extra gas
+
+- [#4974](https://github.com/thirdweb-dev/js/pull/4974) [`6a4b776`](https://github.com/thirdweb-dev/js/commit/6a4b776eccc16203795786d44c4b80c011c2af37) Thanks [@ElasticBottle](https://github.com/ElasticBottle)! - fix: allow account linking on thirdweb dashboard
+
+- [#4977](https://github.com/thirdweb-dev/js/pull/4977) [`7c10343`](https://github.com/thirdweb-dev/js/commit/7c103431c4e4788277086db1f21e32833b6dfd2b) Thanks [@joaquim-verges](https://github.com/joaquim-verges)! - Add soneiumMinato chain definition
+
+## 5.61.4
+
+### Patch Changes
+
+- [#4969](https://github.com/thirdweb-dev/js/pull/4969) [`3446b4c`](https://github.com/thirdweb-dev/js/commit/3446b4cabf0a8b877c344d810f97fd571753df2e) Thanks [@MananTank](https://github.com/MananTank)! - Remove extra text shown in Error Message in Pay UI
+
+## 5.61.3
+
+### Patch Changes
+
+- [#4965](https://github.com/thirdweb-dev/js/pull/4965) [`24981a7`](https://github.com/thirdweb-dev/js/commit/24981a7f60c2a45976c748826339822d81154ce3) Thanks [@joaquim-verges](https://github.com/joaquim-verges)! - Respect raw accountSalt passed as hex
+
+## 5.61.2
+
+### Patch Changes
+
+- [#4948](https://github.com/thirdweb-dev/js/pull/4948) [`ea36c54`](https://github.com/thirdweb-dev/js/commit/ea36c541185a4a333b0689bf7de6b9ae92f85cac) Thanks [@joaquim-verges](https://github.com/joaquim-verges)! - Allow overriding callGasLimit for userops
+
+## 5.61.1
+
+### Patch Changes
+
+- [#4933](https://github.com/thirdweb-dev/js/pull/4933) [`506764d`](https://github.com/thirdweb-dev/js/commit/506764dabdbfa4910416e7a1347a92f0ef0d5e8e) Thanks [@joaquim-verges](https://github.com/joaquim-verges)! - Support show all wallets option in React Native Connect UI
+
+- [#4944](https://github.com/thirdweb-dev/js/pull/4944) [`822ece4`](https://github.com/thirdweb-dev/js/commit/822ece45ece94329c5da2b070da6e7ded09f34c2) Thanks [@joaquim-verges](https://github.com/joaquim-verges)! - Option to disable storing last stored passkey credentials
+
 ## 5.61.0
 
 ### Minor Changes

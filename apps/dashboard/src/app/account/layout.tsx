@@ -1,5 +1,6 @@
 import { getProjects } from "@/api/projects";
 import { getTeams } from "@/api/team";
+import { DashboardTypeCookieSetter } from "@/components/DashboardTypeCookieSetter";
 import { SidebarLayout } from "@/components/blocks/SidebarLayout";
 import { AppFooter } from "@/components/blocks/app-footer";
 import type React from "react";
@@ -42,6 +43,7 @@ export default async function AccountLayout(props: {
         </SidebarLayout>
       </div>
       <TWAutoConnect />
+      <DashboardTypeCookieSetter type="team" />
       <AppFooter />
     </div>
   );
