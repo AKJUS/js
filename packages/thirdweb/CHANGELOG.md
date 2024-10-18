@@ -1,5 +1,45 @@
 # thirdweb
 
+## 5.63.1
+
+### Patch Changes
+
+- [#5065](https://github.com/thirdweb-dev/js/pull/5065) [`b01faac`](https://github.com/thirdweb-dev/js/commit/b01faacd999a6b5d88d273531cea67c97c84d5ae) Thanks [@MananTank](https://github.com/MananTank)! - Catch failed to post tracking errors to avoid exposing them to error report services
+
+- [#5063](https://github.com/thirdweb-dev/js/pull/5063) [`ef6b4f4`](https://github.com/thirdweb-dev/js/commit/ef6b4f48ef94f1196912906a2adfdc8a997ff2af) Thanks [@MananTank](https://github.com/MananTank)! - Add reason string on abort controller's `abort` method to avoid `AbortError: signal is aborted without reason` errors
+
+- [#5080](https://github.com/thirdweb-dev/js/pull/5080) [`67a363f`](https://github.com/thirdweb-dev/js/commit/67a363f624b935e02718e6cb205856e8b568477b) Thanks [@gregfromstl](https://github.com/gregfromstl)! - Fix revalidation with siwe auth in ConnectEmbed
+
+## 5.63.0
+
+### Minor Changes
+
+- [#5047](https://github.com/thirdweb-dev/js/pull/5047) [`3a141e7`](https://github.com/thirdweb-dev/js/commit/3a141e742c19eeeecf031a3014cb476ee69d4c0c) Thanks [@gregfromstl](https://github.com/gregfromstl)! - Adds twitch auth strategy
+
+### Patch Changes
+
+- [#5059](https://github.com/thirdweb-dev/js/pull/5059) [`cb6a053`](https://github.com/thirdweb-dev/js/commit/cb6a0537d8fbec5d8e07a530caf501f94d30ae0e) Thanks [@joaquim-verges](https://github.com/joaquim-verges)! - Update default zk chains
+
+- [#5053](https://github.com/thirdweb-dev/js/pull/5053) [`772604e`](https://github.com/thirdweb-dev/js/commit/772604eee2bb20265826846f3953a2add99f35b3) Thanks [@gregfromstl](https://github.com/gregfromstl)! - Fix flaky auth state in PWAs
+
+## 5.62.0
+
+### Minor Changes
+
+- [#5032](https://github.com/thirdweb-dev/js/pull/5032) [`3fe33a6`](https://github.com/thirdweb-dev/js/commit/3fe33a6ca062acf08e3590619ebfe9748cdd79f6) Thanks [@kien-ngo](https://github.com/kien-ngo)! - Add ERC1155 extension: mintToBatch
+
+- [#4992](https://github.com/thirdweb-dev/js/pull/4992) [`1994d9e`](https://github.com/thirdweb-dev/js/commit/1994d9e52d3a3874e6111ff7bc688f95618fbc25) Thanks [@joaquim-verges](https://github.com/joaquim-verges)! - Support for enclave wallet migration in React Native
+
+  this change requires the latest version of the `@thirdweb-dev/react-native-adapter` package to be installed.
+
+### Patch Changes
+
+- [#5045](https://github.com/thirdweb-dev/js/pull/5045) [`ec10e81`](https://github.com/thirdweb-dev/js/commit/ec10e81624bb4389e5efc6570133f19d3df5368a) Thanks [@joaquim-verges](https://github.com/joaquim-verges)! - Fix linking wallets for ecosystems
+
+- [#5029](https://github.com/thirdweb-dev/js/pull/5029) [`da9f196`](https://github.com/thirdweb-dev/js/commit/da9f1964e4ae74ed5d33666788e2d16e4d56614d) Thanks [@jnsdls](https://github.com/jnsdls)! - update dependencies
+
+- [#5009](https://github.com/thirdweb-dev/js/pull/5009) [`6faf63f`](https://github.com/thirdweb-dev/js/commit/6faf63ff9597926f855263008014acfd4c349e5e) Thanks [@kien-ngo](https://github.com/kien-ngo)! - Fix upload logic for delayed reveal batch
+
 ## 5.61.6
 
 ### Patch Changes

@@ -117,7 +117,7 @@ export function DailyConnectionsChartCard(props: {
             ]);
             return { header, rows };
           }}
-          fileName="DialyConnections"
+          fileName="DailyConnections"
         />
       </div>
 
