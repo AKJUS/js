@@ -1,8 +1,9 @@
 "use client";
 
 import type { Team } from "@/api/team";
+import { useThirdwebClient } from "@/constants/thirdweb.client";
 import { cn } from "@/lib/utils";
-import { useAccount } from "@3rdweb-sdk/react/hooks/useApi";
+import type { Account } from "@3rdweb-sdk/react/hooks/useApi";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { TeamSettingsSidebar } from "./_components/sidebar/TeamSettingsSidebar";
@@ -16,6 +17,7 @@ import { getTeamSettingsLinks } from "./_components/sidebar/getTeamSettingsLinks
 export function SettingsLayout(props: {
   team: Team;
   children: React.ReactNode;
+  account: Account;
 }) {
   const [_showFullNavOnMobile, setShowFullNavOnMobile] = useState(true);
   const pathname = usePathname();
@@ -23,10 +25,10 @@ export function SettingsLayout(props: {
   const showFullNavOnMobile = _showFullNavOnMobile && isSettingsOverview;
   const links = getTeamSettingsLinks(props.team.slug);
   const activeLink = links.find((link) => pathname === link.href);
-  const accountQuery = useAccount();
+  const client = useThirdwebClient();
 
   return (
-    <div>
+    <div className="flex grow flex-col">
       {/* Huge page title  */}
       <div className="border-border border-b py-10">
         <div className="container">
@@ -46,10 +48,14 @@ export function SettingsLayout(props: {
       </div>
 
       <div className="container flex grow gap-8 lg:min-h-[900px] [&>*]:py-8 lg:[&>*]:py-10">
-        <TeamSettingsSidebar team={props.team} account={accountQuery.data} />
+        <TeamSettingsSidebar
+          team={props.team}
+          account={props.account}
+          client={client}
+        />
         <div
           className={cn(
-            "grow",
+            "flex grow flex-col",
             // if showing full nav on mobile - hide the page content
             showFullNavOnMobile && "max-sm:hidden",
           )}

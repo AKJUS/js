@@ -1,5 +1,5 @@
-export const dynamic = "force-dynamic";
 import { CodeExample } from "@/components/code/code-example";
+import { CustomLoginForm } from "@/components/in-app-wallet/custom-login-form";
 import { InAppConnectEmbed } from "../../../components/in-app-wallet/connect-button";
 import { Profiles } from "../../../components/in-app-wallet/profile-sections";
 import ThirdwebProvider from "../../../components/thirdweb-provider";
@@ -31,18 +31,21 @@ function AnyAuth() {
           base.
         </p>
       </div>
-
-      <CodeExample
-        preview={<InAppConnectEmbed />}
-        code={`import { inAppWallet } from "thirdweb/wallets";
+      <div className="space-y-2">
+        <h3 className="mb-3 font-medium text-lg">Prebuilt UI</h3>
+        <p className="max-w-[600px]">
+          Instant out of the box authentication with a prebuilt UI.
+        </p>
+        <CodeExample
+          preview={<InAppConnectEmbed />}
+          code={`import { inAppWallet } from "thirdweb/wallets";
         import { ConnectEmbed } from "thirdweb/react";
-
 
         const wallets = [
           inAppWallet(
             // built-in auth methods
             { auth: {
-              options: [ 
+              options: [
               "google",
               "x",
               "apple",
@@ -67,8 +70,55 @@ function AnyAuth() {
           return (
 <ConnectEmbed client={client} wallets={wallets} />);
 };`}
-        lang="tsx"
-      />
+          lang="tsx"
+        />
+      </div>
+      <div className="space-y-2">
+        <h3 className="mb-3 font-medium text-lg">Custom UI</h3>
+        <p className="max-w-[600px]">
+          Customize the login UI and integrate with your existing user base. No
+          limits on customizations and auth methods.
+        </p>
+        <CodeExample
+          preview={
+            <div className="w-1/2">
+              <CustomLoginForm />
+            </div>
+          }
+          code={`import { useState } from "react";
+import { useConnect } from "thirdweb/react";
+import { inAppWallet, preAuthenticate } from "thirdweb/wallets/in-app";
+
+export function CustomLoginUi() {
+  const { connect, isConnecting, error } = useConnect();
+
+  const preLogin = async (email: string) => {
+    // send email verification code
+    await preAuthenticate({
+      client,
+      strategy: "email",
+      email,
+    });
+  };
+
+  const handleLogin = async (email: string, verificationCode: string) => {
+    // verify email with verificationCode and connect
+    connect(async () => {
+      const wallet = inAppWallet();
+      await wallet.connect({
+        client,
+        strategy: "email",
+        email,
+        verificationCode,
+      });
+      return wallet;
+    });
+  };
+}
+`}
+          lang="tsx"
+        />
+      </div>
     </>
   );
 }

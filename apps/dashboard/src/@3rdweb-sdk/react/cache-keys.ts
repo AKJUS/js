@@ -21,6 +21,21 @@ export const accountKeys = {
       to,
       period,
     ] as const,
+  userOpStats: (
+    walletAddress: string,
+    clientId: string,
+    from: string,
+    to: string,
+    period: string,
+  ) =>
+    [
+      ...accountKeys.wallet(walletAddress),
+      "userOps",
+      clientId,
+      from,
+      to,
+      period,
+    ] as const,
   credits: (walletAddress: string) =>
     [...accountKeys.wallet(walletAddress), "credits"] as const,
   billingSession: (walletAddress: string) =>
@@ -48,8 +63,11 @@ export const embeddedWalletsKeys = {
   all: ["embeddedWallets"] as const,
   wallet: (walletAddress: string) =>
     [...embeddedWalletsKeys.all, walletAddress] as const,
-  embeddedWallets: (walletAddress: string, clientId: string | undefined) =>
-    [...embeddedWalletsKeys.wallet(walletAddress), clientId] as const,
+  embeddedWallets: (
+    walletAddress: string,
+    clientId: string | undefined,
+    page: number,
+  ) => [...embeddedWalletsKeys.wallet(walletAddress), clientId, page] as const,
 };
 
 export const engineKeys = {
@@ -93,7 +111,8 @@ export const engineKeys = {
     ] as const,
   health: (instance: string) =>
     [...engineKeys.all, instance, "health"] as const,
-  latestVersion: () => [...engineKeys.all, "latestVersion"] as const,
+  deploymentPublicConfiguration: () =>
+    [...engineKeys.all, "deploymentPublicConfiguration"] as const,
   systemMetrics: (engineId: string) =>
     [...engineKeys.all, engineId, "systemMetrics"] as const,
   queueMetrics: (engineId: string) =>

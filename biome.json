@@ -29,7 +29,8 @@
         "noRestrictedGlobals": {
           "options": { "deniedGlobals": ["Buffer"] },
           "level": "error"
-        }
+        },
+        "noUselessElse": "off"
       }
     }
   },
@@ -38,16 +39,6 @@
     "indentStyle": "space"
   },
   "overrides": [
-    {
-      "include": ["apps/dashboard/src/css/swagger-ui.css"],
-      "linter": {
-        "rules": {
-          "suspicious": {
-            "noImportantInKeyframe": "off"
-          }
-        }
-      }
-    },
     {
       "include": [
         "packages/thirdweb/src/crypto/aes/lib/md5.ts",

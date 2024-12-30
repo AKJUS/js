@@ -26,6 +26,7 @@ const chainIdNameMap = [
   { id: 660279, name: "xai", label: "Xai" },
   { id: 324, name: "zksync-era", label: "zkSync Era" },
   { id: 7777777, name: "zora", label: "Zora" },
+  { id: 61166, name: "treasure", label: "Treasure" },
 ];
 
 if (process.env.NEXT_PUBLIC_INCLUDE_TESTNETS) {
@@ -44,15 +45,6 @@ export function chainIdToName(chainId: number) {
   const chain = chainIdNameMap.find((chain) => chain.id === chainId);
   if (chain) {
     return chain.name;
-  }
-
-  throw new Error(`Unknown chain id: ${chainId}`);
-}
-
-export function chainIdToLabel(chainId: number) {
-  const chain = chainIdNameMap.find((chain) => chain.id === chainId);
-  if (chain) {
-    return chain.label;
   }
 
   throw new Error(`Unknown chain id: ${chainId}`);

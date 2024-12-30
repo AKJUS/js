@@ -1,7 +1,7 @@
 "use client";
 
 import ThirdwebProvider from "@/components/thirdweb-provider";
-import { useState } from "react";
+import { use, useState } from "react";
 import { APIHeader } from "../../../../components/blocks/APIHeader";
 import type { ConnectPlaygroundOptions } from "../components/types";
 import { LeftSection } from "./LeftSection";
@@ -50,9 +50,10 @@ const defaultConnectOptions: ConnectPlaygroundOptions = {
   requireApproval: false,
 };
 
-export default function Page({
-  searchParams,
-}: { searchParams: { tab: string } }) {
+export default function Page(props: {
+  searchParams: Promise<{ tab: string }>;
+}) {
+  const searchParams = use(props.searchParams);
   const [connectOptions, setConnectOptions] =
     useState<ConnectPlaygroundOptions>(defaultConnectOptions);
 
@@ -64,7 +65,7 @@ export default function Page({
           description={
             <>
               A fully featured wallet connection component that allows to
-              Connect to 350+ external wallets, connect via email, phone number,
+              Connect to 500+ external wallets, connect via email, phone number,
               passkey or social logins, Convert any wallet to a ERC4337 smart
               wallet for gasless transactions and provides SIWE (Sign In With
               Ethereum)

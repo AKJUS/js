@@ -1,42 +1,43 @@
 import { notFound } from "next/navigation";
-import * as CommonExt from "thirdweb/extensions/common";
-import { ContractSettingsPage } from "../../../../../../contract-ui/tabs/settings/page";
+import { localhost } from "thirdweb/chains";
+import { getRawAccount } from "../../../../../account/settings/getAccount";
 import { getContractPageParamsInfo } from "../_utils/getContractFromParams";
 import { getContractPageMetadata } from "../_utils/getContractPageMetadata";
+import { ContractSettingsPage } from "./ContractSettingsPage";
+import { ContractSettingsPageClient } from "./ContractSettingsPage.client";
 
 export default async function Page(props: {
-  params: {
+  params: Promise<{
     contractAddress: string;
     chain_id: string;
-  };
+  }>;
 }) {
-  const info = await getContractPageParamsInfo(props.params);
+  const params = await props.params;
+  const info = await getContractPageParamsInfo(params);
 
   if (!info) {
     notFound();
   }
 
-  const { functionSelectors } = await getContractPageMetadata(info.contract);
+  const { contract } = info;
+
+  if (contract.chain.id === localhost.id) {
+    const account = await getRawAccount();
+    return (
+      <ContractSettingsPageClient contract={contract} twAccount={account} />
+    );
+  }
+
+  const [account, metadata] = await Promise.all([
+    getRawAccount(),
+    getContractPageMetadata(info.contract),
+  ]);
 
   return (
     <ContractSettingsPage
       contract={info.contract}
-      isContractMetadataSupported={[
-        CommonExt.isGetContractMetadataSupported(functionSelectors),
-        CommonExt.isSetContractMetadataSupported(functionSelectors),
-      ].every(Boolean)}
-      isPrimarySaleSupported={[
-        CommonExt.isPrimarySaleRecipientSupported(functionSelectors),
-        CommonExt.isSetPrimarySaleRecipientSupported(functionSelectors),
-      ].every(Boolean)}
-      isRoyaltiesSupported={[
-        CommonExt.isGetDefaultRoyaltyInfoSupported(functionSelectors),
-        CommonExt.isSetDefaultRoyaltyInfoSupported(functionSelectors),
-      ].every(Boolean)}
-      isPlatformFeesSupported={[
-        CommonExt.isGetPlatformFeeInfoSupported(functionSelectors),
-        CommonExt.isSetPlatformFeeInfoSupported(functionSelectors),
-      ].every(Boolean)}
+      functionSelectors={metadata.functionSelectors}
+      twAccount={account}
     />
   );
 }

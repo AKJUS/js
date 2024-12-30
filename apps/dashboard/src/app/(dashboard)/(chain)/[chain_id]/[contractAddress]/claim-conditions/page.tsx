@@ -1,21 +1,31 @@
 import { notFound, redirect } from "next/navigation";
-import { ClaimConditions } from "../../../../../../contract-ui/tabs/claim-conditions/components/claim-conditions";
+import { localhost } from "thirdweb/chains";
+import { getRawAccount } from "../../../../../account/settings/getAccount";
+import { ClaimConditions } from "../_components/claim-conditions/claim-conditions";
 import { getContractPageParamsInfo } from "../_utils/getContractFromParams";
 import { getContractPageMetadata } from "../_utils/getContractPageMetadata";
+import { ClaimConditionsClient } from "./ClaimConditions.client";
 
 export default async function Page(props: {
-  params: {
+  params: Promise<{
     contractAddress: string;
     chain_id: string;
-  };
+  }>;
 }) {
-  const info = await getContractPageParamsInfo(props.params);
+  const params = await props.params;
+  const info = await getContractPageParamsInfo(params);
 
   if (!info) {
     notFound();
   }
+  const { contract, chainMetadata } = info;
 
-  const { contract } = info;
+  const account = await getRawAccount();
+
+  if (chainMetadata.chainId === localhost.id) {
+    return <ClaimConditionsClient contract={contract} twAccount={account} />;
+  }
+
   const {
     isERC20ClaimConditionsSupported,
     isERC721ClaimConditionsSupported,
@@ -23,10 +33,14 @@ export default async function Page(props: {
   } = await getContractPageMetadata(contract);
 
   if (!isERC20ClaimConditionsSupported && !isERC721ClaimConditionsSupported) {
-    redirect(`/${props.params.chain_id}/${props.params.contractAddress}`);
+    redirect(`/${params.chain_id}/${params.contractAddress}`);
   }
 
   return (
-    <ClaimConditions contract={contract} isERC20={supportedERCs.isERC20} />
+    <ClaimConditions
+      contract={contract}
+      isERC20={supportedERCs.isERC20}
+      twAccount={account}
+    />
   );
 }

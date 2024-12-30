@@ -1,7 +1,7 @@
 // bytecode
 export { detectMethod } from "../utils/bytecode/detectExtension.js";
 export { extractIPFSUri } from "../utils/bytecode/extractIPFS.js";
-export { extractMinimalProxyImplementationAddress } from "../utils/bytecode/extractMnimalProxyImplementationAddress.js";
+export { extractMinimalProxyImplementationAddress } from "../utils/bytecode/extractMinimalProxyImplementationAddress.js";
 export { isContractDeployed } from "../utils/bytecode/is-contract-deployed.js";
 export { ensureBytecodePrefix } from "../utils/bytecode/prefix.js";
 export { resolveImplementation } from "../utils/bytecode/resolveImplementation.js";
@@ -138,15 +138,26 @@ export { isBytes } from "viem";
 // abi
 // ------------------------------------------------
 export { encodeAbiParameters } from "../utils/abi/encodeAbiParameters.js";
+export { decodeError } from "../utils/abi/decodeError.js";
+export { decodeFunctionData } from "../utils/abi/decodeFunctionData.js";
+export { decodeFunctionResult } from "../utils/abi/decodeFunctionResult.js";
 
 /**
  * @utils
  */
-export { encodePacked } from "viem";
+export {
+  encodePacked,
+  decodeAbiParameters,
+} from "viem";
 
 // Useful helpers
 export { setThirdwebDomains } from "../utils/domains.js";
 export { resolvePromisedValue } from "../utils/promise/resolve-promised-value.js";
+export {
+  setTransactionDecorator,
+  getTransactionDecorator,
+  clearTransactionDecorator,
+} from "../utils/config.js";
 
 // ------------------------------------------------
 // json
@@ -193,3 +204,6 @@ export type {
   AbiConstructor,
   AbiFallback,
 } from "abitype";
+
+export { shortenLargeNumber } from "../utils/shortenLargeNumber.js";
+export { formatNumber } from "../utils/formatNumber.js";

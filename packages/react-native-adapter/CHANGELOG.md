@@ -1,5 +1,31 @@
 # @thirdweb-dev/react-native-adapter
 
+## 1.5.3
+
+### Patch Changes
+
+- [#5746](https://github.com/thirdweb-dev/js/pull/5746) [`e42ffc6`](https://github.com/thirdweb-dev/js/commit/e42ffc6a931a8d80492a091d79e2d9b38e4ba1d7) Thanks [@joaquim-verges](https://github.com/joaquim-verges)! - Downgrade aws libraries
+
+## 1.5.2
+
+### Patch Changes
+
+- [#5594](https://github.com/thirdweb-dev/js/pull/5594) [`b7c8854`](https://github.com/thirdweb-dev/js/commit/b7c885432726eeaf3401217573f2cff0f5247ff7) Thanks [@joaquim-verges](https://github.com/joaquim-verges)! - Support for Expo 52 and React Native 0.76
+
+## 1.5.1
+
+### Patch Changes
+
+- [#5150](https://github.com/thirdweb-dev/js/pull/5150) [`9fadbcc`](https://github.com/thirdweb-dev/js/commit/9fadbcc17abfe302933f7b860ab7c3b4fb577789) Thanks [@jnsdls](https://github.com/jnsdls)! - update dependencies
+
+- [#5151](https://github.com/thirdweb-dev/js/pull/5151) [`06c0cf3`](https://github.com/thirdweb-dev/js/commit/06c0cf3898419edc79ba042d041612a8ae6967f8) Thanks [@joaquim-verges](https://github.com/joaquim-verges)! - update to latest @mobile-wallet-protocol/client
+
+## 1.5.0
+
+### Minor Changes
+
+- [#4992](https://github.com/thirdweb-dev/js/pull/4992) [`1994d9e`](https://github.com/thirdweb-dev/js/commit/1994d9e52d3a3874e6111ff7bc688f95618fbc25) Thanks [@joaquim-verges](https://github.com/joaquim-verges)! - Updated required dependencies
+
 ## 1.4.4
 
 ### Patch Changes

@@ -1,3 +1,4 @@
+import { CodeClient } from "@/components/ui/code/code.client";
 import {
   Accordion,
   AccordionButton,
@@ -6,7 +7,6 @@ import {
   AccordionPanel,
 } from "@chakra-ui/react";
 import type { Abi } from "abitype";
-import { CodeBlock, Heading } from "tw-components";
 import type { SourceFile } from "../types";
 
 interface SourcesAccordionProps {
@@ -32,27 +32,24 @@ export const SourcesAccordion: React.FC<SourcesAccordionProps> = ({
           {({ isExpanded }) => (
             <>
               <AccordionButton justifyContent="space-between" py={2}>
-                <Heading size="label.md">ABI</Heading>
+                <p className="font-semibold">ABI</p>
                 <AccordionIcon />
               </AccordionButton>
               <AccordionPanel>
                 {isExpanded && (
-                  <CodeBlock
-                    code={JSON.stringify(abi, null, 2)}
-                    language="json"
-                    overflow="auto"
-                  />
+                  <CodeClient code={JSON.stringify(abi, null, 2)} lang="json" />
                 )}
               </AccordionPanel>
             </>
           )}
         </AccordionItem>
       )}
-      {sources.map((signature) => (
+      {sources.map((signature, i) => (
         <AccordionItem
           gap={4}
           flexDirection="column"
-          key={signature.filename}
+          // biome-ignore lint/suspicious/noArrayIndexKey: static list
+          key={i}
           borderColor="borderColor"
           _first={{ borderTopWidth: 0 }}
           _last={{ borderBottomWidth: 0 }}
@@ -60,16 +57,12 @@ export const SourcesAccordion: React.FC<SourcesAccordionProps> = ({
           {({ isExpanded }) => (
             <>
               <AccordionButton justifyContent="space-between" py={2}>
-                <Heading size="label.md">{signature.filename}</Heading>
+                <p className="font-semibold">{signature.filename}</p>
                 <AccordionIcon />
               </AccordionButton>
               <AccordionPanel>
                 {isExpanded && (
-                  <CodeBlock
-                    overflow="auto"
-                    code={signature.source.trim()}
-                    language="solidity"
-                  />
+                  <CodeClient code={signature.source.trim()} lang="solidity" />
                 )}
               </AccordionPanel>
             </>

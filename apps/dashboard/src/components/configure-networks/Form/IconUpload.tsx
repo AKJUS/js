@@ -2,8 +2,8 @@ import { Spinner } from "@/components/ui/Spinner/Spinner";
 import { Button } from "@/components/ui/button";
 import { useDashboardStorageUpload } from "@3rdweb-sdk/react/hooks/useDashboardStorageUpload";
 import { useQueryClient } from "@tanstack/react-query";
+import { PINNED_FILES_QUERY_KEY_ROOT } from "app/team/[team_slug]/(team)/~/usage/storage/your-files";
 import { FileInput } from "components/shared/FileInput";
-import { PINNED_FILES_QUERY_KEY_ROOT } from "components/storage/your-files";
 import { UploadIcon } from "lucide-react";
 import { toast } from "sonner";
 
@@ -22,7 +22,11 @@ export const IconUpload: React.FC<{ onUpload: (url: string) => void }> = ({
 
     storageUpload.mutate([file], {
       onSuccess([uri]) {
-        onUpload(uri);
+        if (uri) {
+          onUpload(uri);
+        } else {
+          toast.error("Something went wrong uploading icon");
+        }
         // also refetch the files list
         queryClient.invalidateQueries({
           queryKey: [PINNED_FILES_QUERY_KEY_ROOT],
@@ -30,7 +34,7 @@ export const IconUpload: React.FC<{ onUpload: (url: string) => void }> = ({
       },
       onError(error) {
         console.error(error);
-        toast.error("Failed to upload file");
+        toast.error("Failed to upload icon");
       },
     });
   };

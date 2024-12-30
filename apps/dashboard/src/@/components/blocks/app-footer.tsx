@@ -80,7 +80,7 @@ export function AppFooter(props: AppFooterProps) {
         <div className="grid grid-flow-col grid-cols-2 grid-rows-5 gap-2 md:flex md:flex-row md:justify-between">
           <Link
             className="px-[10px] py-[6px] text-muted-foreground text-sm hover:underline"
-            href="/"
+            href="/home"
           >
             Home
           </Link>
@@ -107,25 +107,19 @@ export function AppFooter(props: AppFooterProps) {
           </Link>
           <Link
             className="px-[10px] py-[6px] text-muted-foreground text-sm hover:underline"
-            href="https://thirdweb.com/privacy"
+            href="https://thirdweb.com/privacy-policy"
             target="_blank"
           >
             Privacy Policy
           </Link>
           <Link
             className="px-[10px] py-[6px] text-muted-foreground text-sm hover:underline"
-            href="https://thirdweb.com/tos"
+            href="https://thirdweb.com/terms"
             target="_blank"
           >
             Terms of Service
           </Link>
-          <Link
-            className="px-[10px] py-[6px] text-muted-foreground text-sm hover:underline"
-            href="https://thirdweb.com/gas"
-            target="_blank"
-          >
-            Gas Estimator
-          </Link>
+
           <Link
             className="px-[10px] py-[6px] text-muted-foreground text-sm hover:underline"
             href="https://thirdweb.com/chainlist"

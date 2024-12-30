@@ -1,20 +1,21 @@
 import { bytesToHex } from "viem";
+import { trackTransaction } from "../../../../analytics/track/transaction.js";
 import { getCachedChain } from "../../../../chains/utils.js";
 import type { ThirdwebClient } from "../../../../client/client.js";
 import { eth_sendRawTransaction } from "../../../../rpc/actions/eth_sendRawTransaction.js";
 import { getRpcClient } from "../../../../rpc/rpc.js";
 import { getAddress } from "../../../../utils/address.js";
 import { type Hex, toHex } from "../../../../utils/encoding/hex.js";
-import { parseTypedData } from "../../../../utils/signatures/helpers/parseTypedData.js";
+import { parseTypedData } from "../../../../utils/signatures/helpers/parse-typed-data.js";
 import type { Prettify } from "../../../../utils/type-utils.js";
 import type {
   Account,
   SendTransactionOption,
 } from "../../../interfaces/wallet.js";
-import { getUserStatus } from "../../web/lib/actions/get-enclave-user-status.js";
-import { signMessage as signEnclaveMessage } from "../../web/lib/actions/sign-message.enclave.js";
-import { signTransaction as signEnclaveTransaction } from "../../web/lib/actions/sign-transaction.enclave.js";
-import { signTypedData as signEnclaveTypedData } from "../../web/lib/actions/sign-typed-data.enclave.js";
+import { getUserStatus } from "../actions/get-enclave-user-status.js";
+import { signMessage as signEnclaveMessage } from "../actions/sign-message.enclave.js";
+import { signTransaction as signEnclaveTransaction } from "../actions/sign-transaction.enclave.js";
+import { signTypedData as signEnclaveTypedData } from "../actions/sign-typed-data.enclave.js";
 import type { ClientScopedStorage } from "../authentication/client-scoped-storage.js";
 import type {
   AuthDetails,
@@ -33,16 +34,14 @@ export type UserStatus = {
       | { address: string; [key: string]: string }
       | { id: string; [key: string]: string };
   }[];
-  wallets:
-    | [
-        {
-          address: string;
-          createdAt: string;
-          type: "sharded" | "enclave";
-        },
-      ]
-    | [];
+  wallets: UserWallet[];
   id: string;
+};
+
+export type UserWallet = {
+  address: string;
+  createdAt: string;
+  type: "sharded" | "enclave";
 };
 
 export class EnclaveWallet implements IWebWallet {
@@ -130,8 +129,9 @@ export class EnclaveWallet implements IWebWallet {
    */
   async getAccount(): Promise<Account> {
     const client = this.client;
-    const ecosystem = this.ecosystem;
     const storage = this.localStorage;
+    const address = this.address;
+    const ecosystem = this.ecosystem;
 
     const _signTransaction = async (tx: SendTransactionOption) => {
       const rpcRequest = getRpcClient({
@@ -139,45 +139,49 @@ export class EnclaveWallet implements IWebWallet {
         chain: getCachedChain(tx.chainId),
       });
       const transaction: Record<string, Hex | number | undefined> = {
-        to: (tx.to as Hex) ?? undefined,
-        data: tx.data ? toHex(tx.data) : undefined,
-        value: tx.value ? toHex(tx.value) : undefined,
-        gas: tx.gas ? toHex(tx.gas + tx.gas / BigInt(10)) : undefined, // Add a 10% buffer to gas
-        nonce: tx.nonce
-          ? toHex(tx.nonce)
-          : toHex(
-              await import(
-                "../../../../rpc/actions/eth_getTransactionCount.js"
-              ).then(({ eth_getTransactionCount }) =>
-                eth_getTransactionCount(rpcRequest, {
-                  address: this.address,
-                  blockTag: "pending",
-                }),
+        to: tx.to ? getAddress(tx.to) : undefined,
+        data: tx.data,
+        value: typeof tx.value === "bigint" ? toHex(tx.value) : undefined,
+        gas:
+          typeof tx.gas === "bigint"
+            ? toHex(tx.gas + tx.gas / BigInt(10))
+            : undefined, // Add a 10% buffer to gas
+        nonce:
+          typeof tx.nonce === "number"
+            ? toHex(tx.nonce)
+            : toHex(
+                await import(
+                  "../../../../rpc/actions/eth_getTransactionCount.js"
+                ).then(({ eth_getTransactionCount }) =>
+                  eth_getTransactionCount(rpcRequest, {
+                    address: this.address,
+                    blockTag: "pending",
+                  }),
+                ),
               ),
-            ),
         chainId: toHex(tx.chainId),
       };
 
-      if (tx.maxFeePerGas) {
+      if (typeof tx.maxFeePerGas === "bigint") {
         transaction.maxFeePerGas = toHex(tx.maxFeePerGas);
-        transaction.maxPriorityFeePerGas = tx.maxPriorityFeePerGas
-          ? toHex(tx.maxPriorityFeePerGas)
-          : undefined;
+        transaction.maxPriorityFeePerGas =
+          typeof tx.maxPriorityFeePerGas === "bigint"
+            ? toHex(tx.maxPriorityFeePerGas)
+            : undefined;
         transaction.type = 2;
       } else {
-        transaction.gasPrice = tx.gasPrice ? toHex(tx.gasPrice) : undefined;
+        transaction.gasPrice =
+          typeof tx.gasPrice === "bigint" ? toHex(tx.gasPrice) : undefined;
         transaction.type = 0;
       }
-
       return signEnclaveTransaction({
         client,
-        ecosystem,
         storage,
         payload: transaction,
       });
     };
     return {
-      address: getAddress(this.address),
+      address: getAddress(address),
       async signTransaction(tx) {
         if (!tx.chainId) {
           throw new Error("chainId required in tx to sign");
@@ -194,13 +198,24 @@ export class EnclaveWallet implements IWebWallet {
           chain: getCachedChain(tx.chainId),
         });
         const signedTx = await _signTransaction(tx);
+
         const transactionHash = await eth_sendRawTransaction(
           rpcRequest,
           signedTx,
         );
-        return {
+
+        trackTransaction({
+          client,
+          ecosystem,
+          chainId: tx.chainId,
+          walletAddress: address,
+          walletType: "inApp",
           transactionHash,
-        };
+          contractAddress: tx.to ?? undefined,
+          gasPrice: tx.gasPrice,
+        });
+
+        return { transactionHash };
       },
       async signMessage({ message }) {
         const messagePayload = (() => {
@@ -218,7 +233,6 @@ export class EnclaveWallet implements IWebWallet {
 
         const { signature } = await signEnclaveMessage({
           client,
-          ecosystem,
           payload: messagePayload,
           storage,
         });
@@ -228,7 +242,6 @@ export class EnclaveWallet implements IWebWallet {
         const parsedTypedData = parseTypedData(_typedData);
         const { signature } = await signEnclaveTypedData({
           client,
-          ecosystem,
           payload: parsedTypedData,
           storage,
         });

@@ -58,6 +58,21 @@ export const SERVICE_DEFINITIONS = {
     // all actions allowed
     actions: [],
   },
+  insight: {
+    name: "insight",
+    title: "Insight",
+    description: "Insight services",
+    // all actions allowed
+    actions: [],
+  },
+  nebula: {
+    name: "nebula",
+    title: "Nebula",
+    description:
+      "Advanced blockchain reasoning and execution capabilities with AI",
+    // all actions allowed
+    actions: [],
+  },
 } as const;
 
 export const SERVICE_NAMES = Object.keys(

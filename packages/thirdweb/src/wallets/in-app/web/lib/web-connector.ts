@@ -3,11 +3,15 @@ import { getThirdwebBaseUrl } from "../../../../utils/domains.js";
 import { webLocalStorage } from "../../../../utils/storage/webStorage.js";
 import type { SocialAuthOption } from "../../../../wallets/types.js";
 import type { Account } from "../../../interfaces/wallet.js";
+import { getUserStatus } from "../../core/actions/get-enclave-user-status.js";
+import { authEndpoint } from "../../core/authentication/authEndpoint.js";
 import { ClientScopedStorage } from "../../core/authentication/client-scoped-storage.js";
 import { guestAuthenticate } from "../../core/authentication/guest.js";
+import { customJwt } from "../../core/authentication/jwt.js";
 import {
   getLinkedProfilesInternal,
   linkAccount,
+  unlinkAccount,
 } from "../../core/authentication/linkAccount.js";
 import {
   loginWithPasskey,
@@ -22,13 +26,13 @@ import type {
   LogoutReturnType,
   MultiStepAuthArgsType,
   MultiStepAuthProviderType,
+  Profile,
   SingleStepAuthArgsType,
 } from "../../core/authentication/types.js";
 import type { InAppConnector } from "../../core/interfaces/connector.js";
 import { EnclaveWallet } from "../../core/wallet/enclave-wallet.js";
 import type { Ecosystem } from "../../core/wallet/types.js";
 import type { IWebWallet } from "../../core/wallet/web-wallet.js";
-import { getUserStatus } from "../lib/actions/get-enclave-user-status.js";
 import type { InAppWalletConstructorType } from "../types.js";
 import { InAppWalletIframeCommunicator } from "../utils/iFrameCommunication/InAppWalletIframeCommunicator.js";
 import { Auth, type AuthQuerierTypes } from "./auth/iframe-auth.js";
@@ -43,7 +47,7 @@ export class InAppWebConnector implements InAppConnector {
   private client: ThirdwebClient;
   private ecosystem?: Ecosystem;
   private querier: InAppWalletIframeCommunicator<AuthQuerierTypes>;
-  private localStorage: ClientScopedStorage;
+  private storage: ClientScopedStorage;
 
   private wallet?: IWebWallet;
   /**
@@ -79,10 +83,10 @@ export class InAppWebConnector implements InAppConnector {
     this.client = client;
     this.ecosystem = ecosystem;
     this.passkeyDomain = passkeyDomain;
-    this.localStorage = new ClientScopedStorage({
+    this.storage = new ClientScopedStorage({
       storage: webLocalStorage,
       clientId: client.clientId,
-      ecosystemId: ecosystem?.id,
+      ecosystem: ecosystem,
     });
     this.querier = new InAppWalletIframeCommunicator({
       clientId: client.clientId,
@@ -94,15 +98,12 @@ export class InAppWebConnector implements InAppConnector {
       client,
       querier: this.querier,
       baseUrl,
-      localStorage: this.localStorage,
+      localStorage: this.storage,
       ecosystem,
       onAuthSuccess: async (authResult) => {
         onAuthSuccess?.(authResult);
 
-        if (
-          this.ecosystem &&
-          authResult.storedToken.authDetails.walletType === "sharded"
-        ) {
+        if (authResult.storedToken.authDetails.walletType === "sharded") {
           // If this is an existing sharded ecosystem wallet, we'll need to migrate
           const result = await this.querier.call<boolean>({
             procedureName: "migrateFromShardToEnclave",
@@ -111,11 +112,15 @@ export class InAppWebConnector implements InAppConnector {
             },
           });
           if (!result) {
-            throw new Error("Failed to migrate from sharded to enclave wallet");
+            console.warn(
+              "Failed to migrate from sharded to enclave wallet, continuing with sharded wallet",
+            );
           }
         }
 
-        await this.initializeWallet(authResult.storedToken.cookieString);
+        this.wallet = await this.initializeWallet(
+          authResult.storedToken.cookieString,
+        );
 
         if (!this.wallet) {
           throw new Error("Failed to initialize wallet");
@@ -131,7 +136,7 @@ export class InAppWebConnector implements InAppConnector {
           deviceShareStored,
         });
 
-        if (authResult.storedToken.authDetails.walletType !== "enclave") {
+        if (this.wallet instanceof IFrameWallet) {
           await this.querier.call({
             procedureName: "initIframe",
             params: {
@@ -161,8 +166,8 @@ export class InAppWebConnector implements InAppConnector {
     });
   }
 
-  async initializeWallet(authToken?: string) {
-    const storedAuthToken = await this.localStorage.getAuthCookie();
+  async initializeWallet(authToken?: string): Promise<IWebWallet> {
+    const storedAuthToken = await this.storage.getAuthCookie();
     if (!authToken && storedAuthToken === null) {
       throw new Error(
         "No auth token provided and no stored auth token found to initialize the wallet",
@@ -174,6 +179,7 @@ export class InAppWebConnector implements InAppConnector {
       client: this.client,
       ecosystem: this.ecosystem,
     });
+
     if (!user) {
       throw new Error("Cannot initialize wallet, no user logged in");
     }
@@ -183,21 +189,20 @@ export class InAppWebConnector implements InAppConnector {
       );
     }
 
-    if (user.wallets[0].type === "enclave") {
-      this.wallet = new EnclaveWallet({
+    if (user.wallets[0]?.type === "enclave") {
+      return new EnclaveWallet({
         client: this.client,
         ecosystem: this.ecosystem,
         address: user.wallets[0].address,
-        storage: this.localStorage,
+        storage: this.storage,
       });
-      return;
     }
 
-    this.wallet = new IFrameWallet({
+    return new IFrameWallet({
       client: this.client,
       ecosystem: this.ecosystem,
       querier: this.querier,
-      localStorage: this.localStorage,
+      localStorage: this.storage,
     });
   }
 
@@ -227,11 +232,11 @@ export class InAppWebConnector implements InAppConnector {
   async getUser(): Promise<GetUser> {
     // If we don't have a wallet yet we'll create one
     if (!this.wallet) {
-      const localAuthToken = await this.localStorage.getAuthCookie();
+      const localAuthToken = await this.storage.getAuthCookie();
       if (!localAuthToken) {
         return { status: "Logged Out" };
       }
-      await this.initializeWallet(localAuthToken);
+      this.wallet = await this.initializeWallet(localAuthToken);
     }
     if (!this.wallet) {
       throw new Error("Wallet not initialized");
@@ -268,8 +273,11 @@ export class InAppWebConnector implements InAppConnector {
     });
   }
 
-  async loginWithAuthToken(authResult: AuthStoredTokenWithCookieReturnType) {
-    return this.auth.loginWithAuthToken(authResult);
+  async loginWithAuthToken(
+    authResult: AuthStoredTokenWithCookieReturnType,
+    recoveryCode?: string,
+  ) {
+    return this.auth.loginWithAuthToken(authResult, recoveryCode);
   }
 
   /**
@@ -292,19 +300,21 @@ export class InAppWebConnector implements InAppConnector {
           client: this.client,
           ecosystem: this.ecosystem,
         });
+      case "auth_endpoint": {
+        return authEndpoint({
+          payload: args.payload,
+          client: this.client,
+          ecosystem: this.ecosystem,
+        });
+      }
       case "jwt":
-        return this.auth.authenticateWithCustomJwt({
+        return customJwt({
           jwt: args.jwt,
-          encryptionKey: args.encryptionKey,
+          client: this.client,
+          ecosystem: this.ecosystem,
         });
       case "passkey": {
         return this.passkeyAuth(args);
-      }
-      case "auth_endpoint": {
-        return this.auth.authenticateWithCustomAuthEndpoint({
-          payload: args.payload,
-          encryptionKey: args.encryptionKey,
-        });
       }
       case "iframe_email_verification": {
         return this.auth.authenticateWithIframe({
@@ -318,9 +328,12 @@ export class InAppWebConnector implements InAppConnector {
       case "facebook":
       case "google":
       case "telegram":
+      case "github":
+      case "twitch":
       case "farcaster":
       case "line":
       case "x":
+      case "steam":
       case "coinbase":
       case "discord": {
         return loginWithOauth({
@@ -357,17 +370,10 @@ export class InAppWebConnector implements InAppConnector {
   ): Promise<AuthLoginReturnType> {
     const strategy = args.strategy;
     switch (strategy) {
+      case "auth_endpoint":
       case "jwt": {
-        return this.auth.loginWithCustomJwt({
-          jwt: args.jwt,
-          encryptionKey: args.encryptionKey,
-        });
-      }
-      case "auth_endpoint": {
-        return this.auth.loginWithCustomAuthEndpoint({
-          payload: args.payload,
-          encryptionKey: args.encryptionKey,
-        });
+        const authToken = await this.authenticate(args);
+        return await this.loginWithAuthToken(authToken, args.encryptionKey);
       }
       case "iframe_email_verification": {
         return this.auth.loginWithIframe({
@@ -389,10 +395,13 @@ export class InAppWebConnector implements InAppConnector {
       case "google":
       case "farcaster":
       case "telegram":
+      case "github":
       case "line":
       case "x":
       case "guest":
       case "coinbase":
+      case "twitch":
+      case "steam":
       case "discord": {
         const authToken = await this.authenticate(args);
         return await this.auth.loginWithAuthToken(authToken);
@@ -413,7 +422,7 @@ export class InAppWebConnector implements InAppConnector {
     const { PasskeyWebClient } = await import("./auth/passkeys.js");
     const { passkeyName, storeLastUsedPasskey = true } = args;
     const passkeyClient = new PasskeyWebClient();
-    const storage = this.localStorage;
+    const storage = this.storage;
     if (args.type === "sign-up") {
       return registerPasskey({
         client: this.client,
@@ -444,8 +453,17 @@ export class InAppWebConnector implements InAppConnector {
     return await linkAccount({
       client: args.client,
       tokenToLink: storedToken.cookieString,
-      storage: this.localStorage,
+      storage: this.storage,
       ecosystem: args.ecosystem || this.ecosystem,
+    });
+  }
+
+  async unlinkProfile(profile: Profile) {
+    return await unlinkAccount({
+      client: this.client,
+      storage: this.storage,
+      ecosystem: this.ecosystem,
+      profileToUnlink: profile,
     });
   }
 
@@ -453,7 +471,7 @@ export class InAppWebConnector implements InAppConnector {
     return getLinkedProfilesInternal({
       client: this.client,
       ecosystem: this.ecosystem,
-      storage: this.localStorage,
+      storage: this.storage,
     });
   }
 }

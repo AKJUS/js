@@ -1,5 +1,5 @@
 import type { ThirdwebClient } from "../../client/client.js";
-import { isCoinbaseSDKWallet } from "../coinbase/coinbaseWebSDK.js";
+import { isCoinbaseSDKWallet } from "../coinbase/coinbase-web.js";
 import { isInAppWallet } from "../in-app/core/wallet/index.js";
 import { getInjectedProvider } from "../injected/index.js";
 import type { Wallet } from "../interfaces/wallet.js";
@@ -16,7 +16,7 @@ export type GetCallsStatusOptions = {
 /**
  * Get the status of an [EIP-5792](https://eips.ethereum.org/EIPS/eip-5792) bundle.
  *
- * @note This function is dependent on the wallet's support for EIP-5792 and could fail.
+ *  This function is dependent on the wallet's support for EIP-5792 and could fail.
  *
  * @param {GetCallsStatusOptions} options
  * @param {Wallet} options.wallet - The wallet that send the original calls.
@@ -64,7 +64,7 @@ export async function getCallsStatus({
 
   if (isCoinbaseSDKWallet(wallet)) {
     const { coinbaseSDKWalletGetCallsStatus } = await import(
-      "../coinbase/coinbaseWebSDK.js"
+      "../coinbase/coinbase-web.js"
     );
     return coinbaseSDKWalletGetCallsStatus({ wallet, bundleId });
   }

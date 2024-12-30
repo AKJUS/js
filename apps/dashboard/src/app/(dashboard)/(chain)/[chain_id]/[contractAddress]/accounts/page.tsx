@@ -1,26 +1,37 @@
 import { notFound, redirect } from "next/navigation";
-import { AccountsPage } from "../../../../../../contract-ui/tabs/accounts/page";
+import { localhost } from "thirdweb/chains";
+import { getRawAccount } from "../../../../../account/settings/getAccount";
 import { getContractPageParamsInfo } from "../_utils/getContractFromParams";
 import { getContractPageMetadata } from "../_utils/getContractPageMetadata";
+import { AccountsPage } from "./AccountsPage";
+import { AccountsPageClient } from "./AccountsPage.client";
 
 export default async function Page(props: {
-  params: {
+  params: Promise<{
     contractAddress: string;
     chain_id: string;
-  };
+  }>;
 }) {
-  const info = await getContractPageParamsInfo(props.params);
+  const params = await props.params;
+  const info = await getContractPageParamsInfo(params);
 
   if (!info) {
     notFound();
   }
 
-  const { contract } = info;
+  const { contract, chainMetadata } = info;
+
+  const account = await getRawAccount();
+
+  if (chainMetadata.chainId === localhost.id) {
+    return <AccountsPageClient contract={contract} twAccount={account} />;
+  }
+
   const { isAccountFactory } = await getContractPageMetadata(contract);
 
   if (!isAccountFactory) {
-    redirect(`/${props.params.chain_id}/${props.params.contractAddress}`);
+    redirect(`/${params.chain_id}/${params.contractAddress}`);
   }
 
-  return <AccountsPage contract={contract} />;
+  return <AccountsPage contract={contract} twAccount={account} />;
 }

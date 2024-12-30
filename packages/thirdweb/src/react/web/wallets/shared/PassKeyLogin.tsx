@@ -160,7 +160,8 @@ function LoginScreen(props: {
         await setLastAuthProvider("passkey", webLocalStorage);
       }
       done();
-    } catch {
+    } catch (e) {
+      console.error("Failed to login with passkey", e);
       setStatus("error");
     }
   }
@@ -211,6 +212,12 @@ function SignupScreen(props: {
   const { wallet, done, client, chain } = props;
   const [error, setError] = useState<string | undefined>();
   const [status, setStatus] = useState<"loading" | "error">("loading");
+  const ecosystem = isEcosystemWallet(wallet)
+    ? {
+        id: wallet.id,
+        partnerId: wallet.getConfig()?.partnerId,
+      }
+    : undefined;
 
   async function signup() {
     setStatus("loading");
@@ -220,6 +227,7 @@ function SignupScreen(props: {
           client,
           strategy: "passkey",
           type: "sign-up",
+          ecosystem,
         });
       } else {
         await wallet.connect({

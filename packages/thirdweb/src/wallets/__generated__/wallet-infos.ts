@@ -95,7 +95,7 @@ const ALL_MINIMAL_WALLET_INFOS = (<const>[
     hasMobileSupport: true,
   },
   {
-    id: "com.crypto",
+    id: "com.crypto.wallet",
     name: "Crypto.com | DeFi Wallet",
     hasMobileSupport: true,
   },
@@ -435,11 +435,6 @@ const ALL_MINIMAL_WALLET_INFOS = (<const>[
     hasMobileSupport: true,
   },
   {
-    id: "org.nitrogen",
-    name: "Nitrogen Wallet",
-    hasMobileSupport: true,
-  },
-  {
     id: "io.loopring.wallet",
     name: "Loopring",
     hasMobileSupport: true,
@@ -635,11 +630,6 @@ const ALL_MINIMAL_WALLET_INFOS = (<const>[
     hasMobileSupport: true,
   },
   {
-    id: "io.tradestrike",
-    name: "StrikeX Wallet",
-    hasMobileSupport: true,
-  },
-  {
     id: "cc.avacus",
     name: "Avacus",
     hasMobileSupport: true,
@@ -790,11 +780,6 @@ const ALL_MINIMAL_WALLET_INFOS = (<const>[
     hasMobileSupport: true,
   },
   {
-    id: "com.brave.wallet",
-    name: "Bitski",
-    hasMobileSupport: true,
-  },
-  {
     id: "io.streakk",
     name: "Streakk Wallet",
     hasMobileSupport: true,
@@ -921,7 +906,12 @@ const ALL_MINIMAL_WALLET_INFOS = (<const>[
   },
   {
     id: "com.tomi",
-    name: "tomiPAY",
+    name: "tomi Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "io.tradestrike",
+    name: "StrikeX Wallet",
     hasMobileSupport: true,
   },
   {
@@ -1795,6 +1785,46 @@ const ALL_MINIMAL_WALLET_INFOS = (<const>[
     hasMobileSupport: true,
   },
   {
+    id: "com.ipmb",
+    name: "IPMB Wallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.daffione",
+    name: "DaffiOne",
+    hasMobileSupport: true,
+  },
+  {
+    id: "io.owallet",
+    name: "OWallet",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.beexo",
+    name: "Beexo",
+    hasMobileSupport: true,
+  },
+  {
+    id: "com.webauth",
+    name: "WebAuth",
+    hasMobileSupport: true,
+  },
+  {
+    id: "id.plumaa",
+    name: "Plumaa ID",
+    hasMobileSupport: true,
+  },
+  {
+    id: "social.gm2",
+    name: "GM² Social",
+    hasMobileSupport: true,
+  },
+  {
+    id: "nl.greenhood.wallet",
+    name: "Greenhood",
+    hasMobileSupport: true,
+  },
+  {
     id: "com.coinbase.wallet",
     name: "Coinbase Wallet",
     hasMobileSupport: false,
@@ -1807,6 +1837,11 @@ const ALL_MINIMAL_WALLET_INFOS = (<const>[
   {
     id: "io.rabby",
     name: "Rabby",
+    hasMobileSupport: false,
+  },
+  {
+    id: "com.brave.wallet",
+    name: "Brave Wallet",
     hasMobileSupport: false,
   },
   {
@@ -1860,6 +1895,16 @@ const ALL_MINIMAL_WALLET_INFOS = (<const>[
     hasMobileSupport: false,
   },
   {
+    id: "app.nightly",
+    name: "Nightly",
+    hasMobileSupport: false,
+  },
+  {
+    id: "com.blazpay.wallet",
+    name: "Blazpay",
+    hasMobileSupport: false,
+  },
+  {
     id: "com.lootrush",
     name: "LootRush",
     hasMobileSupport: false,
@@ -1872,6 +1917,11 @@ const ALL_MINIMAL_WALLET_INFOS = (<const>[
   {
     id: "xyz.dawnwallet",
     name: "Dawn Wallet",
+    hasMobileSupport: false,
+  },
+  {
+    id: "xyz.abs",
+    name: "Abstract Global Wallet",
     hasMobileSupport: false,
   },
   {

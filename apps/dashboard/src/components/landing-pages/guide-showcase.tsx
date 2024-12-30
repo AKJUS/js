@@ -1,6 +1,6 @@
-import { Flex, Icon, SimpleGrid } from "@chakra-ui/react";
+import { Flex, SimpleGrid } from "@chakra-ui/react";
 import { GuideCard } from "components/product-pages/common/GuideCard";
-import { FiArrowRight } from "react-icons/fi";
+import { MoveRightIcon } from "lucide-react";
 import { Heading, TrackedLink, type TrackedLinkProps } from "tw-components";
 
 type BlogPost = {
@@ -56,17 +56,18 @@ export const LandingGuidesShowcase: React.FC<LandingGuidesShowcaseProps> = ({
           justifyContent={guides.length <= 2 ? "center" : undefined}
         >
           {guides.map(
-            (
-              { title: guideTitle, description: guideDescription, image, link },
-              idx,
-            ) => (
+            ({
+              title: guideTitle,
+              description: guideDescription,
+              image,
+              link,
+            }) => (
               <GuideCard
                 category={category}
                 label="guide"
                 trackingProps={{
                   guide: guideTitle.replaceAll(" ", "_").toLowerCase(),
                 }}
-                index={idx}
                 key={guideTitle}
                 image={image}
                 title={guideTitle}
@@ -94,7 +95,7 @@ export const LandingGuidesShowcase: React.FC<LandingGuidesShowcaseProps> = ({
             >
               {customSolution}
             </Heading>
-            <Icon as={FiArrowRight} />
+            <MoveRightIcon className="size-4" />
           </Flex>
         </TrackedLink>
       )}
@@ -121,7 +122,7 @@ export const LandingGuidesShowcase: React.FC<LandingGuidesShowcaseProps> = ({
               See all of our {solution.replace("-", " ")}{" "}
               {caseStudies ? "case studies" : "guides"}
             </Heading>
-            <Icon as={FiArrowRight} />
+            <MoveRightIcon className="size-4" />
           </Flex>
         </TrackedLink>
       )}

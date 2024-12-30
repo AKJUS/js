@@ -1,7 +1,11 @@
 "use client";
 
+import { Badge } from "@/components/ui/badge";
+import { CodeClient } from "@/components/ui/code/code.client";
+import { PlainTextCodeBlock } from "@/components/ui/code/plaintext-code";
 import { InlineCode } from "@/components/ui/inline-code";
 import { ToolTipLabel } from "@/components/ui/tooltip";
+import type { Account } from "@3rdweb-sdk/react/hooks/useApi";
 import {
   ButtonGroup,
   Divider,
@@ -34,7 +38,6 @@ import { parseAbiParams, stringify } from "thirdweb/utils";
 import {
   Button,
   Card,
-  CodeBlock,
   FormErrorMessage,
   FormHelperText,
   FormLabel,
@@ -43,18 +46,24 @@ import {
   TrackedLink,
 } from "tw-components";
 
-function formatResponseData(data: unknown): string {
+function formatResponseData(data: unknown): {
+  type: "json" | "text";
+  data: string;
+} {
   // Early exit if data is already a string,
   // otherwise JSON.stringify(data) will wrap it in extra quotes - which will affect the value for [Copy button]
   if (typeof data === "string") {
     // "" is a valid response. For example, some token has `symbol` === ""
     if (data === "") {
-      return `""`;
+      return { type: "text", data: `""` };
     }
-    return data;
+    return { type: "text", data };
   }
   if (typeof data === "bigint") {
-    return data.toString();
+    return {
+      type: "text",
+      data: data.toString(),
+    };
   }
 
   if (typeof data === "object") {
@@ -71,7 +80,10 @@ function formatResponseData(data: unknown): string {
     }
   }
 
-  return stringify(data, null, 2);
+  return {
+    type: "json",
+    data: stringify(data, null, 2),
+  };
 }
 
 function formatError(error: Error): string {
@@ -120,6 +132,7 @@ function formatContractCall(
 interface InteractiveAbiFunctionProps {
   abiFunction: AbiFunction;
   contract: ThirdwebContract;
+  twAccount: Account | undefined;
 }
 
 function useAsyncRead(contract: ThirdwebContract, functionName: string) {
@@ -192,10 +205,11 @@ ${(err as Error).message || ""}`);
   });
 }
 
-export const InteractiveAbiFunction: React.FC<InteractiveAbiFunctionProps> = ({
-  abiFunction,
-  contract,
-}) => {
+export const InteractiveAbiFunction: React.FC<InteractiveAbiFunctionProps> = (
+  props,
+) => {
+  const { abiFunction, contract } = props;
+
   const formId = useId();
   const form = useForm({
     defaultValues: {
@@ -416,36 +430,45 @@ export const InteractiveAbiFunction: React.FC<InteractiveAbiFunctionProps> = ({
           ) : formattedResponseData ? (
             <>
               <Divider />
-              <Heading size="label.sm">Output</Heading>
-              <CodeBlock
-                w="full"
-                position="relative"
-                language={
-                  formattedResponseData.startsWith("http") ||
-                  formattedResponseData.startsWith("ipfs")
-                    ? "text"
-                    : "json"
-                }
-                code={formattedResponseData}
-              />
-              {/* If the result is an IPFS URI, show a handy link so that users can open it in a new tab */}
-              {formattedResponseData.startsWith("ipfs://") && (
-                <Text size="label.sm">
-                  <TrackedLink
-                    href={replaceIpfsUrl(formattedResponseData)}
-                    isExternal
-                    category="contract-explorer"
-                    label="open-in-gateway"
-                  >
-                    Open in gateway
-                  </TrackedLink>
-                </Text>
+              <div className="flex flex-row items-center gap-2">
+                <Heading size="label.sm">Output</Heading>
+                {/* Show the Solidity type of the function's output */}
+                {abiFunction.outputs.length > 0 && (
+                  <Badge variant="default">
+                    {abiFunction.outputs[0]?.type}
+                  </Badge>
+                )}
+              </div>
+
+              {formattedResponseData.type === "text" ? (
+                <PlainTextCodeBlock code={formattedResponseData.data} />
+              ) : (
+                <CodeClient
+                  lang={formattedResponseData.type}
+                  code={formattedResponseData.data}
+                />
               )}
+
+              {/* If the result is an IPFS URI, show a handy link so that users can open it in a new tab */}
+              {formattedResponseData.type === "text" &&
+                formattedResponseData.data.startsWith("ipfs://") && (
+                  <Text size="label.sm">
+                    <TrackedLink
+                      href={replaceIpfsUrl(formattedResponseData.data)}
+                      isExternal
+                      category="contract-explorer"
+                      label="open-in-gateway"
+                    >
+                      Open in gateway
+                    </TrackedLink>
+                  </Text>
+                )}
               {/* Same with the logic above but this time it's applied to traditional urls */}
-              {(formattedResponseData.startsWith("https://") ||
-                formattedResponseData.startsWith("http://")) && (
+              {((formattedResponseData.type === "text" &&
+                formattedResponseData.data.startsWith("https://")) ||
+                formattedResponseData.data.startsWith("http://")) && (
                 <Link
-                  href={formattedResponseData}
+                  href={formattedResponseData.data}
                   target="_blank"
                   className="mt-1 inline-flex items-center gap-2 text-muted-foreground text-sm hover:text-foreground"
                 >
@@ -487,15 +510,15 @@ export const InteractiveAbiFunction: React.FC<InteractiveAbiFunctionProps> = ({
                 Simulate
               </Button>
               <TransactionButton
-                isDisabled={
+                disabled={
                   !abiFunction || txSimulation.isPending || mutationLoading
                 }
-                colorScheme="primary"
                 transactionCount={1}
-                isLoading={mutationLoading}
+                isPending={mutationLoading}
                 form={formId}
                 onClick={handleContractWrite}
                 txChainID={contract.chain.id}
+                twAccount={props.twAccount}
               >
                 Execute
               </TransactionButton>

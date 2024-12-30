@@ -1,7 +1,10 @@
 import type { ThirdwebClient } from "../../client/client.js";
 import { type ThirdwebContract, getContract } from "../../contract/contract.js";
 import { upload } from "../../storage/upload.js";
-import type { BaseTransactionOptions } from "../../transaction/types.js";
+import type {
+  BaseTransactionOptions,
+  WithOverrides,
+} from "../../transaction/types.js";
 import type { NFTInput } from "../../utils/nft/parseNft.js";
 import { toUnits } from "../../utils/units.js";
 import type { AddPackContentsParams } from "./__generated__/IPack/write/addPackContents.js";
@@ -10,6 +13,7 @@ import {
   createPack,
 } from "./__generated__/IPack/write/createPack.js";
 
+// biome-ignore lint/nursery/noEnum: fine here
 export enum PACK_TOKEN_TYPE {
   ERC20 = 0,
   ERC721 = 1,
@@ -114,7 +118,7 @@ export type CreateNewPackParams = {
  * ```
  */
 export function createNewPack(
-  options: BaseTransactionOptions<CreateNewPackParams>,
+  options: WithOverrides<BaseTransactionOptions<CreateNewPackParams>>,
 ) {
   return createPack({
     contract: options.contract,
@@ -126,7 +130,7 @@ export function createNewPack(
  * @internal
  */
 async function getCreatePackParams(
-  options: BaseTransactionOptions<CreateNewPackParams>,
+  options: WithOverrides<BaseTransactionOptions<CreateNewPackParams>>,
 ): Promise<CreatePackParams> {
   const {
     contract,
@@ -138,6 +142,7 @@ async function getCreatePackParams(
     erc721Rewards,
     erc1155Rewards,
     tokenOwner,
+    overrides,
   } = options;
   const [erc20Content, erc721Content, erc1155Content, packUri] =
     await Promise.all([
@@ -179,6 +184,7 @@ async function getCreatePackParams(
     // openStartTimestamp should be in seconds and not millisecond
     openStartTimestamp: BigInt(Math.ceil(openStartTimestamp.getTime() / 1000)),
     amountDistributedPerOpen,
+    overrides,
   };
 }
 

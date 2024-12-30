@@ -1,15 +1,14 @@
-import { trackConnect } from "../../analytics/track.js";
+import { trackConnect } from "../../analytics/track/connect.js";
 import type { Chain } from "../../chains/types.js";
 import { getCachedChainIfExists } from "../../chains/utils.js";
 import { getContract } from "../../contract/contract.js";
+import { isZkSyncChain } from "../../utils/any-evm/zksync/isZkSyncChain.js";
 import { isContractDeployed } from "../../utils/bytecode/is-contract-deployed.js";
 import type { Account, Wallet } from "../interfaces/wallet.js";
 import { createWalletEmitter } from "../wallet-emitter.js";
-import type {
-  CreateWalletArgs,
-  WalletConnectionOption,
-} from "../wallet-types.js";
+import type { WalletConnectionOption } from "../wallet-types.js";
 import { getDefaultAccountFactory } from "./lib/constants.js";
+import type { SmartWalletOptions } from "./types.js";
 
 /**
  * Creates a ERC4337 smart wallet based on a admin account.
@@ -82,24 +81,22 @@ import { getDefaultAccountFactory } from "./lib/constants.js";
  *  sponsorGas: true, // enable sponsored transactions
  *  factoryAddress: "0x...", // custom factory address
  * });
+ * ```
  *
  * ## Using v0.7 Entrypoint
  *
- * Both v0.6 (default) and v0.7 ERC4337 Entrypoints are supported. To use the v0.7 Entrypoint, you can pass the `entrypointAddress` option to the `smartWallet` function, as well as a compatible account factory.
+ * Both v0.6 (default) and v0.7 ERC4337 Entrypoints are supported. To use the v0.7 Entrypoint, simply pass in a compatible account factory.
  *
  * You can use the predeployed `DEFAULT_ACCOUNT_FACTORY_V0_7` or deploy your own [AccountFactory  v0.7](https://thirdweb.com/thirdweb.eth/AccountFactory_0_7).
  *
  * ```ts
- * import { smartWallet, DEFAULT_ACCOUNT_FACTORY_V0_7, ENTRYPOINT_ADDRESS_v0_7 } from "thirdweb/wallets/smart";
+ * import { smartWallet, DEFAULT_ACCOUNT_FACTORY_V0_7 } from "thirdweb/wallets/smart";
  * import { sepolia } from "thirdweb/chains";
  *
  * const wallet = smartWallet({
  *  chain: sepolia,
  *  sponsorGas: true, // enable sponsored transactions
- *  factoryAddress: DEFAULT_ACCOUNT_FACTORY_V0_7,
- *  overrides: {
- *    entrypointAddress: ENTRYPOINT_ADDRESS_v0_7
- *  }
+ *  factoryAddress: DEFAULT_ACCOUNT_FACTORY_V0_7, // 0.7 factory address
  * });
  * ```
  *
@@ -119,7 +116,7 @@ import { getDefaultAccountFactory } from "./lib/constants.js";
  *    accountAddress: "0x...", // override account address
  *    accountSalt: "0x...", // override account salt
  *    entrypointAddress: "0x...", // override entrypoint address
- *    erc20Paymaster: { ... }, // enable erc20 paymaster
+ *    tokenPaymaster: TokenPaymaster.BASE_USDC, // enable erc20 paymaster
  *    bundlerUrl: "https://...", // override bundler url
  *    paymaster: (userOp) => { ... }, // override paymaster
  *    ...
@@ -132,7 +129,7 @@ import { getDefaultAccountFactory } from "./lib/constants.js";
  * @wallet
  */
 export function smartWallet(
-  createOptions: CreateWalletArgs<"smart">[1],
+  createOptions: SmartWalletOptions,
 ): Wallet<"smart"> {
   const emitter = createWalletEmitter<"smart">();
   let account: Account | undefined = undefined;
@@ -169,6 +166,7 @@ export function smartWallet(
         client: options.client,
         walletType: "smart",
         walletAddress: account.address,
+        chainId: chain.id,
       });
       // return account
       return account;
@@ -189,6 +187,7 @@ export function smartWallet(
         client: options.client,
         walletType: "smart",
         walletAddress: account.address,
+        chainId: chain.id,
       });
       // return account
       emitter.emit("accountChanged", account);
@@ -205,19 +204,24 @@ export function smartWallet(
       if (!lastConnectOptions) {
         throw new Error("Cannot switch chain without a previous connection");
       }
-      // check if factory is deployed
-      const factory = getContract({
-        address:
-          createOptions.factoryAddress ||
-          getDefaultAccountFactory(createOptions.overrides?.entrypointAddress),
-        chain: newChain,
-        client: lastConnectOptions.client,
-      });
-      const isDeployed = await isContractDeployed(factory);
-      if (!isDeployed) {
-        throw new Error(
-          `Factory contract not deployed on chain: ${newChain.id}`,
-        );
+      const isZksyncChain = await isZkSyncChain(newChain);
+      if (!isZksyncChain) {
+        // check if factory is deployed
+        const factory = getContract({
+          address:
+            createOptions.factoryAddress ||
+            getDefaultAccountFactory(
+              createOptions.overrides?.entrypointAddress,
+            ),
+          chain: newChain,
+          client: lastConnectOptions.client,
+        });
+        const isDeployed = await isContractDeployed(factory);
+        if (!isDeployed) {
+          throw new Error(
+            `Factory contract not deployed on chain: ${newChain.id}`,
+          );
+        }
       }
       const { connectSmartWallet } = await import("./index.js");
       const [connectedAccount, connectedChain] = await connectSmartWallet(

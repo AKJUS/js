@@ -5,6 +5,8 @@ import { Heading, Text, type TrackedLinkProps } from "tw-components";
 import { LandingCTAButtons } from "./cta-buttons";
 import { LandingDesktopMobileImage } from "./desktop-mobile-image";
 
+import type { JSX } from "react";
+
 interface LandingHeroWithSideImageProps {
   title: string | JSX.Element;
   titleWithGradient: string;
@@ -18,8 +20,6 @@ interface LandingHeroWithSideImageProps {
   gradient: string;
   image?: StaticImageData;
   mobileImage?: StaticImageData;
-  // biome-ignore lint/complexity/noBannedTypes: FIXME
-  lottie?: {};
   miniImage?: StaticImageData;
   mt?: BoxProps["mt"];
   contactUsBg?: TrackedLinkProps["bg"];
@@ -42,7 +42,7 @@ export const LandingHeroWithSideImage: React.FC<
   gradient,
   image,
   mobileImage,
-  lottie,
+
   miniImage,
   mt,
   contactUsBg,
@@ -91,11 +91,7 @@ export const LandingHeroWithSideImage: React.FC<
         />
       </Flex>
       <Flex maxH="500px">
-        <LandingDesktopMobileImage
-          lottie={lottie}
-          image={image}
-          mobileImage={mobileImage}
-        />
+        <LandingDesktopMobileImage image={image} mobileImage={mobileImage} />
       </Flex>
     </SimpleGrid>
   );

@@ -1,10 +1,15 @@
 // @ts-check
-import TypeDoc from "typedoc";
+import { Application } from "typedoc";
 
 const jsonOut = "typedoc/documentation.json";
 
-const app = await TypeDoc.Application.bootstrapWithPlugins({
-  entryPoints: ["src/exports/**/*.ts", "src/extensions/modules/**/index.ts"],
+const app = await Application.bootstrapWithPlugins({
+  entryPoints: [
+    "src/exports/**/*.ts",
+    "src/extensions/modules/**/index.ts",
+    "src/adapters/eip1193/index.ts",
+    "src/wallets/smart/presets/index.ts",
+  ],
   exclude: [
     "src/exports/*.native.ts",
     "src/exports/**/*.native.ts",

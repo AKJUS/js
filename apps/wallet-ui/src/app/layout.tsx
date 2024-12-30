@@ -1,7 +1,7 @@
 import Providers from "@/components/Providers";
+import { cn } from "@/lib/utils";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { cn } from "../lib/utils";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -11,7 +11,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body
         className={cn(
           "flex min-h-screen w-full max-w-screen justify-center",

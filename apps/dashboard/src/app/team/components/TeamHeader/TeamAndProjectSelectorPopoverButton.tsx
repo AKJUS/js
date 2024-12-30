@@ -9,6 +9,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { useThirdwebClient } from "@/constants/thirdweb.client";
 import type { Account } from "@3rdweb-sdk/react/hooks/useApi";
 import { ChevronsUpDownIcon } from "lucide-react";
 import { useState } from "react";
@@ -20,7 +21,7 @@ type TeamSwitcherProps = {
   currentProject: Project | undefined;
   teamsAndProjects: Array<{ team: Team; projects: Project[] }>;
   focus: "project-selection" | "team-selection";
-  createProject: () => void;
+  createProject: (team: Team) => void;
   account: Pick<Account, "email" | "id"> | undefined;
 };
 
@@ -29,7 +30,13 @@ export function TeamAndProjectSelectorPopoverButton(props: TeamSwitcherProps) {
   const { currentTeam, teamsAndProjects } = props;
   const [hoveredTeam, setHoveredTeam] = useState<Team>();
   const projectsToShowOfTeam =
-    hoveredTeam || currentTeam || teamsAndProjects[0].team;
+    hoveredTeam || currentTeam || teamsAndProjects[0]?.team;
+  const client = useThirdwebClient();
+
+  // if we can't find a single team associated with this user - something is really wrong
+  if (!projectsToShowOfTeam) {
+    return null;
+  }
 
   const projectsToShow = teamsAndProjects.find(
     (x) => x.team.slug === projectsToShowOfTeam.slug,
@@ -86,6 +93,7 @@ export function TeamAndProjectSelectorPopoverButton(props: TeamSwitcherProps) {
                   : undefined
               }
               account={props.account}
+              client={client}
             />
 
             {/* Right */}
@@ -96,7 +104,7 @@ export function TeamAndProjectSelectorPopoverButton(props: TeamSwitcherProps) {
                 team={projectsToShowOfTeam}
                 createProject={() => {
                   setOpen(false);
-                  props.createProject();
+                  props.createProject(projectsToShowOfTeam);
                 }}
               />
             )}

@@ -1,56 +1,61 @@
 "use client";
 
-import { TabButtons } from "@/components/ui/tabs";
-import type { ApiKeyService } from "@3rdweb-sdk/react/hooks/useApi";
-import { useState } from "react";
+import { TabLinks } from "@/components/ui/tabs";
+import { useUserOpUsageAggregate } from "@3rdweb-sdk/react/hooks/useApi";
+import { AccountAbstractionAnalytics } from "./AccountAbstractionAnalytics";
+import { AccountAbstractionSummary } from "./AccountAbstractionAnalytics/AccountAbstractionSummary";
 import { AccountFactories } from "./AccountFactories";
-import { AccountAbstractionSettingsPage } from "./SponsorshipPolicies";
 
 interface SmartWalletsProps {
-  apiKeyServices: ApiKeyService[];
   trackingCategory: string;
-  defaultTab: 0 | 1;
+  clientId: string;
+  smartWalletsLayoutSlug: string;
+  tab?: string;
 }
 
 export const SmartWallets: React.FC<SmartWalletsProps> = ({
-  apiKeyServices,
   trackingCategory,
-  defaultTab,
+  clientId,
+  smartWalletsLayoutSlug,
+  tab = "analytics",
 }) => {
-  const [selectedTab, setSelectedTab] = useState<"factories" | "config">(
-    defaultTab === 0 ? "config" : "factories",
-  );
+  const aggregateUserOpUsageQuery = useUserOpUsageAggregate({
+    clientId,
+  });
 
   return (
     <div>
-      <TabButtons
-        tabs={[
+      <AccountAbstractionSummary
+        aggregateUserOpUsageQuery={aggregateUserOpUsageQuery.data}
+      />
+
+      <div className="h-12" />
+
+      <TabLinks
+        links={[
           {
-            name: "Sponsorship Policies",
-            onClick: () => setSelectedTab("config"),
-            isActive: selectedTab === "config",
-            isEnabled: true,
+            name: "Analytics",
+            href: `${smartWalletsLayoutSlug}?tab=analytics`,
+            isActive: tab === "analytics",
+            isDisabled: false,
           },
           {
             name: "Account Factories",
-            onClick: () => setSelectedTab("factories"),
-            isActive: selectedTab === "factories",
-            isEnabled: true,
+            href: `${smartWalletsLayoutSlug}?tab=factories`,
+            isActive: tab === "factories",
+            isDisabled: false,
           },
         ]}
       />
 
       <div className="h-6" />
 
-      {selectedTab === "factories" && (
-        <AccountFactories trackingCategory={trackingCategory} />
+      {tab === "analytics" && (
+        <AccountAbstractionAnalytics clientId={clientId} />
       )}
 
-      {selectedTab === "config" && (
-        <AccountAbstractionSettingsPage
-          apiKeyServices={apiKeyServices}
-          trackingCategory={trackingCategory}
-        />
+      {tab === "factories" && (
+        <AccountFactories trackingCategory={trackingCategory} />
       )}
     </div>
   );

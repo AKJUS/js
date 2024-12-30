@@ -1,18 +1,26 @@
 "use client";
 import { Button } from "@/components/ui/button";
 import { TrackedLinkTW } from "@/components/ui/tracked-link";
+import { isAfter } from "date-fns";
 import { useLocalStorage } from "hooks/useLocalStorage";
 import { ChevronRightIcon, XIcon } from "lucide-react";
+import { useSelectedLayoutSegment } from "next/navigation";
 
-function AnnouncementBanner(props: {
+export function AnnouncementBanner(props: {
   href: string;
   label: string;
   trackingLabel: string;
 }) {
+  const layoutSegment = useSelectedLayoutSegment();
   const [hasDismissedAnnouncement, setHasDismissedAnnouncement] =
     useLocalStorage(`dismissed-${props.trackingLabel}`, false, true);
 
-  if (hasDismissedAnnouncement) {
+  if (
+    layoutSegment === "/_not-found" ||
+    hasDismissedAnnouncement ||
+    layoutSegment === "login" ||
+    layoutSegment === "nebula-app"
+  ) {
     return null;
   }
 
@@ -51,10 +59,17 @@ function AnnouncementBanner(props: {
 }
 
 export function UnlimitedWalletsBanner() {
+  // hide banner after 31st December 2024
+  const shouldHideBanner = isAfter(new Date(), new Date("31 Dec 2024"));
+
+  if (shouldHideBanner) {
+    return null;
+  }
+
   return (
     <AnnouncementBanner
-      href="/dashboard/settings/billing?coupon=FREEWALLETS"
-      label='Claim 12 months of free in-app wallets. Use code "FREEWALLETS". Redeem offer by October 31st!'
+      href="/team/~/~/settings/billing?coupon=FREEWALLETS24"
+      label='Claim 12 months of free in-app wallets. Use code "FREEWALLETS24". Redeem offer by December 31st!'
       trackingLabel="unlimited-wallets"
     />
   );

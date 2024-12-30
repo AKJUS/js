@@ -2,16 +2,13 @@ import type { Chain } from "../../../chains/types.js";
 import type { ThirdwebClient } from "../../../client/client.js";
 import { hexToBigInt } from "../../../utils/encoding/hex.js";
 import { getClientFetch } from "../../../utils/fetch.js";
+import { stringify } from "../../../utils/json.js";
 import type {
   PaymasterResult,
   UserOperationV06,
   UserOperationV07,
 } from "../types.js";
-import {
-  DEBUG,
-  ENTRYPOINT_ADDRESS_v0_6,
-  getDefaultBundlerUrl,
-} from "./constants.js";
+import { ENTRYPOINT_ADDRESS_v0_6, getDefaultBundlerUrl } from "./constants.js";
 import { hexlifyUserOp } from "./utils.js";
 
 /**
@@ -54,17 +51,19 @@ export async function getPaymasterAndData(args: {
   const entrypoint = entrypointAddress ?? ENTRYPOINT_ADDRESS_v0_6;
   const paymasterUrl = getDefaultBundlerUrl(chain);
 
+  const body = {
+    jsonrpc: "2.0",
+    id: 1,
+    method: "pm_sponsorUserOperation",
+    params: [hexlifyUserOp(userOp), entrypoint],
+  };
+
   // Ask the paymaster to sign the transaction and return a valid paymasterAndData value.
   const fetchWithHeaders = getClientFetch(client);
   const response = await fetchWithHeaders(paymasterUrl, {
     method: "POST",
     headers,
-    body: JSON.stringify({
-      jsonrpc: "2.0",
-      id: 1,
-      method: "pm_sponsorUserOperation",
-      params: [hexlifyUserOp(userOp), entrypoint],
-    }),
+    body: stringify(body),
   });
   const res = await response.json();
 
@@ -79,10 +78,6 @@ Code: ${code}`,
     );
   }
 
-  if (DEBUG) {
-    console.debug("Paymaster result:", res);
-  }
-
   if (res.result) {
     // some paymasters return a string, some return an object with more data
     if (typeof res.result === "string") {
@@ -90,6 +85,13 @@ Code: ${code}`,
         paymasterAndData: res.result,
       };
     }
+    // check for policy errors
+    if (res.result.policyId && res.result.reason) {
+      console.warn(
+        `Paymaster policy rejected this transaction with reason: ${res.result.reason} (policyId: ${res.result.policyId})`,
+      );
+    }
+
     return {
       paymasterAndData: res.result.paymasterAndData,
       verificationGasLimit: res.result.verificationGasLimit

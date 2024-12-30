@@ -6,7 +6,7 @@ export type {
 
 export { ConnectButton } from "../react/web/ui/ConnectWallet/ConnectButton.js";
 export { ConnectEmbed } from "../react/web/ui/ConnectWallet/Modal/ConnectEmbed.js";
-export { type ConnectEmbedProps } from "../react/core/hooks/connection/ConnectEmbedProps.js";
+export type { ConnectEmbedProps } from "../react/core/hooks/connection/ConnectEmbedProps.js";
 
 export type {
   ConnectButtonProps,
@@ -58,6 +58,7 @@ export { useCallsStatus } from "../react/core/hooks/wallets/useCallsStatus.js";
 export { useWalletBalance } from "../react/core/hooks/others/useWalletBalance.js";
 export { useProfiles } from "../react/web/hooks/wallets/useProfiles.js";
 export { useLinkProfile } from "../react/web/hooks/wallets/useLinkProfile.js";
+export { useUnlinkProfile } from "../react/web/hooks/wallets/useUnlinkProfile.js";
 
 // chain hooks
 export { useChainMetadata } from "../react/core/hooks/others/useChainQuery.js";
@@ -70,9 +71,9 @@ export { useWaitForReceipt } from "../react/core/hooks/contract/useWaitForReceip
 export { useContractEvents } from "../react/core/hooks/contract/useContractEvents.js";
 
 // transaction
-export {
-  type SendTransactionConfig,
-  type SendTransactionPayModalConfig,
+export type {
+  SendTransactionConfig,
+  SendTransactionPayModalConfig,
 } from "../react/core/hooks/transaction/useSendTransaction.js";
 export { useSimulateTransaction } from "../react/core/hooks/transaction/useSimulateTransaction.js";
 export { useSendTransaction } from "../react/web/hooks/transaction/useSendTransaction.js";
@@ -123,7 +124,7 @@ export { AutoConnect } from "../react/web/ui/AutoConnect/AutoConnect.js";
 export type { AutoConnectProps } from "../react/core/hooks/connection/types.js";
 
 // auth
-export { type SiweAuthOptions } from "../react/core/hooks/auth/useSiweAuth.js";
+export type { SiweAuthOptions } from "../react/core/hooks/auth/useSiweAuth.js";
 
 export {
   PayEmbed,
@@ -173,10 +174,24 @@ export {
   type CreateDirectListingButtonProps,
 } from "../react/web/ui/prebuilt/thirdweb/CreateDirectListingButton/index.js";
 
+// NFT rendering components
 export {
-  NFT,
+  NFTProvider,
+  type NFTProviderProps,
+} from "../react/web/ui/prebuilt/NFT/provider.js";
+export {
+  NFTName,
+  type NFTNameProps,
+} from "../react/web/ui/prebuilt/NFT/name.js";
+export {
+  NFTDescription,
+  type NFTDescriptionProps,
+} from "../react/web/ui/prebuilt/NFT/description.js";
+export {
+  NFTMedia,
   type NFTMediaProps,
-} from "../react/web/ui/prebuilt/NFT/NFT.js";
+  type NFTMediaInfo,
+} from "../react/web/ui/prebuilt/NFT/media.js";
 
 export { useConnectionManager } from "../react/core/providers/connection-manager.js";
 
@@ -195,3 +210,80 @@ export type {
   FarcasterProfile,
   LensProfile,
 } from "../social/types.js";
+
+// Site Embed and Linking
+export { SiteEmbed } from "../react/web/ui/SiteEmbed.js";
+export { SiteLink } from "../react/web/ui/SiteLink.js";
+
+// Account
+export {
+  AccountAddress,
+  type AccountAddressProps,
+} from "../react/web/ui/prebuilt/Account/address.js";
+export {
+  AccountBalance,
+  type AccountBalanceProps,
+  type AccountBalanceInfo,
+} from "../react/web/ui/prebuilt/Account/balance.js";
+export {
+  AccountName,
+  type AccountNameProps,
+} from "../react/web/ui/prebuilt/Account/name.js";
+export { AccountBlobbie } from "../react/web/ui/prebuilt/Account/blobbie.js";
+export {
+  AccountProvider,
+  type AccountProviderProps,
+} from "../react/web/ui/prebuilt/Account/provider.js";
+export {
+  AccountAvatar,
+  type AccountAvatarProps,
+} from "../react/web/ui/prebuilt/Account/avatar.js";
+
+// Token
+export {
+  TokenProvider,
+  type TokenProviderProps,
+} from "../react/web/ui/prebuilt/Token/provider.js";
+export {
+  TokenName,
+  type TokenNameProps,
+} from "../react/web/ui/prebuilt/Token/name.js";
+export {
+  TokenSymbol,
+  type TokenSymbolProps,
+} from "../react/web/ui/prebuilt/Token/symbol.js";
+export {
+  TokenIcon,
+  type TokenIconProps,
+} from "../react/web/ui/prebuilt/Token/icon.js";
+
+// Chain
+export {
+  ChainProvider,
+  type ChainProviderProps,
+} from "../react/web/ui/prebuilt/Chain/provider.js";
+export {
+  ChainName,
+  type ChainNameProps,
+} from "../react/web/ui/prebuilt/Chain/name.js";
+export {
+  ChainIcon,
+  type ChainIconProps,
+} from "../react/web/ui/prebuilt/Chain/icon.js";
+
+// Utils
+export { getLastAuthProvider } from "../react/web/utils/storage.js";
+
+// Wallet
+export {
+  WalletProvider,
+  type WalletProviderProps,
+} from "../react/web/ui/prebuilt/Wallet/provider.js";
+export {
+  WalletIcon,
+  type WalletIconProps,
+} from "../react/web/ui/prebuilt/Wallet/icon.js";
+export {
+  WalletName,
+  type WalletNameProps,
+} from "../react/web/ui/prebuilt/Wallet/name.js";

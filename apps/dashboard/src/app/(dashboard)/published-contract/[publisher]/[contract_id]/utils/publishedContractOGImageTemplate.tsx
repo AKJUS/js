@@ -1,7 +1,9 @@
 /* eslint-disable @next/next/no-img-element */
 import { getThirdwebClient } from "@/constants/thirdweb.server";
 import { ImageResponse } from "next/og";
+import { isAddress } from "thirdweb";
 import { download } from "thirdweb/storage";
+import { shortenAddress } from "thirdweb/utils";
 
 const OgBrandIcon: React.FC = () => (
   // biome-ignore lint/a11y/noSvgWithoutTitle: not needed
@@ -118,10 +120,11 @@ function descriptionShortener(description: string) {
     words.push(word);
     currentLength += word.length + 1;
   }
-  if (words[words.length - 1].length < 4) {
+  const lastWord = words[words.length - 1];
+  if (lastWord && lastWord.length < 4) {
     words = words.slice(0, -1);
   }
-  if (words[words.length - 1].endsWith(".")) {
+  if (words[words.length - 1]?.endsWith(".")) {
     return words.join(" ");
   }
   if (!shortened) {
@@ -254,7 +257,9 @@ export async function publishedContractOGImageTemplate(params: {
             )}
 
             <h2 tw="text-2xl text-white font-medium max-w-full">
-              {params.publisher}
+              {isAddress(params.publisher)
+                ? shortenAddress(params.publisher)
+                : params.publisher}
             </h2>
           </div>
         </div>

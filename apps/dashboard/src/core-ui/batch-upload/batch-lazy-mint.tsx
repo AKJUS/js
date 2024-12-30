@@ -1,10 +1,10 @@
 "use client";
 
+import type { Account } from "@3rdweb-sdk/react/hooks/useApi";
 import {
   Alert,
   AlertIcon,
   Box,
-  Container,
   Flex,
   FormControl,
   Input,
@@ -24,7 +24,6 @@ import type { CreateDelayedRevealBatchParams } from "thirdweb/extensions/erc721"
 import type { NFTInput } from "thirdweb/utils";
 import {
   Button,
-  Card,
   Checkbox,
   FormErrorMessage,
   FormHelperText,
@@ -104,9 +103,11 @@ function useBatchLazyMintForm() {
   });
 }
 
-export const BatchLazyMint: ComponentWithChildren<BatchLazyMintProps> = (
-  props,
-) => {
+export const BatchLazyMint: ComponentWithChildren<
+  BatchLazyMintProps & {
+    twAccount: Account | undefined;
+  }
+> = (props) => {
   const [step, setStep] = useState(0);
 
   const form = useBatchLazyMintForm();
@@ -139,12 +140,8 @@ export const BatchLazyMint: ComponentWithChildren<BatchLazyMintProps> = (
   const paginationPortalRef = useRef<HTMLDivElement>(null);
 
   return (
-    <Container
-      maxW="container.page"
-      borderRadius={{ base: 0, md: "2xl" }}
-      my={{ base: 0, md: 12 }}
-      p={{ base: 0, md: 4 }}
-      as="form"
+    <form
+      className="mt-4 flex w-full flex-col"
       onSubmit={form.handleSubmit((data) => {
         // first shuffle
         const shuffledMetadatas = data.shuffle
@@ -188,146 +185,111 @@ export const BatchLazyMint: ComponentWithChildren<BatchLazyMintProps> = (
         });
       })}
     >
-      <Card bg="backgroundCardHighlight">
-        <Flex flexDir="column" width="100%" p={4}>
-          {step === 0 ? (
+      {step === 0 ? (
+        <div className="flex flex-col gap-6">
+          {nftMetadatas.length > 0 ? (
             <>
-              <Flex
-                align="center"
-                justify="space-between"
-                py={{ base: 2, md: 4 }}
-                w="100%"
-                mb={2}
-              >
-                <Heading size="title.md">Upload your NFTs</Heading>
-              </Flex>
-              <Flex direction="column" gap={6} h="100%">
-                {nftMetadatas.length > 0 ? (
-                  <BatchTable
-                    portalRef={paginationPortalRef}
-                    data={nftMetadatas}
-                    nextTokenIdToMint={props.nextTokenIdToMint}
-                  />
-                ) : (
-                  <UploadStep
-                    getRootProps={getRootProps}
-                    getInputProps={getInputProps}
-                    hasFailed={hasError}
-                    isDragActive={isDragActive}
-                  />
-                )}
-                <Flex borderTop="1px solid" borderTopColor="borderColor">
-                  <Container maxW="container.page">
-                    <Flex
-                      align="center"
-                      justify="space-between"
-                      p={{ base: 0, md: 4 }}
-                      flexDir={{ base: "column", md: "row" }}
-                      mt={{ base: 4, md: 0 }}
+              <BatchTable
+                portalRef={paginationPortalRef}
+                data={nftMetadatas}
+                nextTokenIdToMint={props.nextTokenIdToMint}
+              />
+              <div className="border-border border-t">
+                <div className="flex flex-col items-center justify-between p-0 md:flex-row md:p-4">
+                  <Box ref={paginationPortalRef} />
+                  <div className="mt-4 flex w-full flex-row items-center gap-2 md:mt-0 md:w-auto">
+                    <Button
+                      borderRadius="md"
+                      isDisabled={!hasError}
+                      onClick={() => {
+                        form.reset();
+                      }}
+                      w={{ base: "100%", md: "auto" }}
                     >
-                      <Box ref={paginationPortalRef} />
-                      <Flex
-                        gap={2}
-                        align="center"
-                        mt={{ base: 4, md: 0 }}
-                        w={{ base: "100%", md: "auto" }}
-                      >
-                        <Button
-                          borderRadius="md"
-                          isDisabled={nftMetadatas.length === 0 || !hasError}
-                          onClick={() => {
-                            form.reset();
-                          }}
-                          w={{ base: "100%", md: "auto" }}
-                        >
-                          Reset
-                        </Button>
-                        <Button
-                          borderRadius="md"
-                          colorScheme="primary"
-                          isDisabled={nftMetadatas.length === 0}
-                          onClick={() => setStep(1)}
-                          w={{ base: "100%", md: "auto" }}
-                        >
-                          Next
-                        </Button>
-                      </Flex>
-                    </Flex>
-                  </Container>
-                </Flex>
-              </Flex>
+                      Reset
+                    </Button>
+                    <Button
+                      borderRadius="md"
+                      colorScheme="primary"
+                      onClick={() => setStep(1)}
+                      w={{ base: "100%", md: "auto" }}
+                    >
+                      Next
+                    </Button>
+                  </div>
+                </div>
+              </div>
             </>
           ) : (
-            <>
-              <Flex
-                align="center"
-                justify="space-between"
-                py={4}
-                w="100%"
-                mb={2}
+            <UploadStep
+              getRootProps={getRootProps}
+              getInputProps={getInputProps}
+              hasFailed={hasError}
+              isDragActive={isDragActive}
+            />
+          )}
+        </div>
+      ) : (
+        <>
+          <Flex align="center" justify="space-between" py={4} w="100%" mb={2}>
+            <div className="flex flex-row items-center gap-2">
+              <Button
+                className="text-muted-foreground"
+                variant="ghost"
+                onClick={() => setStep(0)}
               >
-                <div className="flex flex-row items-center gap-2">
-                  <Button
-                    className="text-muted-foreground"
-                    variant="ghost"
-                    onClick={() => setStep(0)}
-                  >
-                    <ChevronLeftIcon className="size-5 cursor-pointer" />
-                  </Button>
-                  <Heading size="title.md" className="my-auto">
-                    When will you reveal your NFTs?
-                  </Heading>
-                </div>
-              </Flex>
-              <SelectReveal
-                form={form}
-                canCreateDelayedRevealBatch={props.canCreateDelayedRevealBatch}
-              />
-              {form.watch("revealType") && (
-                <>
-                  <Checkbox {...form.register("shuffle")} mt={3}>
-                    <Flex gap={1} flexDir={{ base: "column", md: "row" }}>
-                      <Text>
-                        Shuffle the order of the NFTs before uploading.
-                      </Text>
-                      <Text fontStyle="italic">
-                        This is an off-chain operation and is not provable.
-                      </Text>
-                    </Flex>
-                  </Checkbox>
-                  <Box maxW={{ base: "100%", md: "61%" }}>
-                    <TransactionButton
-                      txChainID={props.chainId}
-                      mt={4}
-                      colorScheme="primary"
-                      transactionCount={1}
-                      isDisabled={!nftMetadatas.length}
-                      type="submit"
-                      isLoading={form.formState.isSubmitting}
-                      loadingText={`Uploading ${nftMetadatas.length} NFTs...`}
-                      w="full"
-                    >
-                      Upload {nftMetadatas.length} NFTs
-                    </TransactionButton>
-                    {props.children}
-                  </Box>
-                  <Text size="body.sm" mt={2}>
-                    <TrackedLink
-                      href="https://support.thirdweb.com/dashboard/n5evQ4EfEjEifczEQaZ1hL/batch-upload-troubleshooting/5WMQFqfaUTU1C8NM8FtJ2X"
-                      isExternal
-                      category="batch-upload"
-                      label="issues"
-                    >
-                      Experiencing issues uploading your files?
-                    </TrackedLink>
+                <ChevronLeftIcon className="size-5 cursor-pointer" />
+              </Button>
+              <Heading size="title.md" className="my-auto">
+                When will you reveal your NFTs?
+              </Heading>
+            </div>
+          </Flex>
+          <SelectReveal
+            form={form}
+            canCreateDelayedRevealBatch={props.canCreateDelayedRevealBatch}
+          />
+          {form.watch("revealType") && (
+            <>
+              <Checkbox {...form.register("shuffle")} mt={3}>
+                <Flex gap={1} flexDir={{ base: "column", md: "row" }}>
+                  <Text>Shuffle the order of the NFTs before uploading.</Text>
+                  <Text fontStyle="italic">
+                    This is an off-chain operation and is not provable.
                   </Text>
-                </>
-              )}
+                </Flex>
+              </Checkbox>
+              <Box maxW={{ base: "100%", md: "61%" }}>
+                <TransactionButton
+                  txChainID={props.chainId}
+                  className="mt-4 w-full"
+                  transactionCount={1}
+                  disabled={!nftMetadatas.length}
+                  type="submit"
+                  isPending={form.formState.isSubmitting}
+                  twAccount={props.twAccount}
+                >
+                  {form.formState.isSubmitting
+                    ? `Uploading ${nftMetadatas.length} NFTs`
+                    : `Upload ${nftMetadatas.length} NFTs`}
+                </TransactionButton>
+                {props.children}
+              </Box>
+              <Text size="body.sm" mt={2}>
+                <TrackedLink
+                  href="https://support.thirdweb.com/dashboard/n5evQ4EfEjEifczEQaZ1hL/batch-upload-troubleshooting/5WMQFqfaUTU1C8NM8FtJ2X"
+                  isExternal
+                  category="batch-upload"
+                  label="issues"
+                >
+                  Experiencing issues uploading your files?
+                </TrackedLink>
+              </Text>
             </>
           )}
-        </Flex>
-      </Card>
-    </Container>
+        </>
+      )}
+    </form>
   );
 };
 

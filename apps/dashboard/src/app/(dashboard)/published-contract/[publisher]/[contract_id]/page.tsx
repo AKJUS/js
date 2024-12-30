@@ -1,37 +1,50 @@
 import { ChakraProviderSetup } from "@/components/ChakraProviderSetup";
 import { Separator } from "@/components/ui/separator";
+import { notFound } from "next/navigation";
 import { PublishedContract } from "../../../../../components/contract-components/published-contract";
+import { getRawAccount } from "../../../../account/settings/getAccount";
 import { PublishedActions } from "../../components/contract-actions-published.client";
 import { DeployContractHeader } from "../../components/contract-header";
 import { getPublishedContractsWithPublisherMapping } from "./utils/getPublishedContractsWithPublisherMapping";
 
 type PublishedContractDeployPageProps = {
-  params: {
+  params: Promise<{
     publisher: string;
     contract_id: string;
-  };
+  }>;
 };
 
 export default async function PublishedContractPage(
   props: PublishedContractDeployPageProps,
 ) {
+  const params = await props.params;
   const publishedContractVersions =
     await getPublishedContractsWithPublisherMapping({
-      publisher: props.params.publisher,
-      contract_id: props.params.contract_id,
+      publisher: params.publisher,
+      contract_id: params.contract_id,
     });
 
+  if (!publishedContractVersions) {
+    notFound();
+  }
+
   const publishedContract = publishedContractVersions[0];
+
+  if (!publishedContract) {
+    notFound();
+  }
+
+  const account = await getRawAccount();
 
   return (
     <>
       <DeployContractHeader
-        {...props.params}
+        {...params}
         allVersions={publishedContractVersions}
         activeVersion={publishedContract}
       >
         <PublishedActions
-          {...props.params}
+          {...params}
           dispayName={publishedContract.displayName || publishedContract.name}
         />
       </DeployContractHeader>
@@ -41,7 +54,8 @@ export default async function PublishedContractPage(
         <div className="grid w-full grid-cols-12 gap-6 md:gap-10">
           <PublishedContract
             publishedContract={publishedContract}
-            walletOrEns={props.params.publisher}
+            walletOrEns={params.publisher}
+            twAccount={account}
           />
         </div>
       </ChakraProviderSetup>

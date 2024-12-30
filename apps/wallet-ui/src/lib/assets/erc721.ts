@@ -3,7 +3,7 @@ import type { Erc721Token } from "@/types/Erc721Token";
 import { chainIdToName, nameToChainId } from "@/util/simplehash";
 import type { Address } from "thirdweb";
 
-export type GetErc721TokensParams = {
+type GetErc721TokensParams = {
   owner: Address;
   chainIds: number[];
   limit?: number;
@@ -61,7 +61,11 @@ export async function getErc721Tokens({
 
   if (!response.ok) {
     response.body?.cancel();
-    throw new Error("Failed to fetch NFTs");
+    console.error("Failed to fetch NFTs");
+    return {
+      nextCursor: undefined,
+      tokens: [],
+    };
   }
   const data = await response.json();
 

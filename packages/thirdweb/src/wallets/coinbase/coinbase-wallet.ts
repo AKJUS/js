@@ -3,7 +3,7 @@
  */
 
 import type { ProviderInterface } from "@coinbase/wallet-sdk";
-import { trackConnect } from "../../analytics/track.js";
+import { trackConnect } from "../../analytics/track/connect.js";
 import type { Chain } from "../../chains/types.js";
 import { getCachedChainIfExists } from "../../chains/utils.js";
 import { COINBASE } from "../constants.js";
@@ -67,7 +67,7 @@ export function coinbaseWalletSDK(args: {
     getAccount: () => account,
     autoConnect: async (options) => {
       const { autoConnectCoinbaseWalletSDK } = await import(
-        "./coinbaseWebSDK.js"
+        "./coinbase-web.js"
       );
       const provider = await args.providerFactory();
       const [connectedAccount, connectedChain, doDisconnect, doSwitchChain] =
@@ -81,12 +81,13 @@ export function coinbaseWalletSDK(args: {
         client: options.client,
         walletType: COINBASE,
         walletAddress: account.address,
+        chainId: chain.id,
       });
       // return account
       return account;
     },
     connect: async (options) => {
-      const { connectCoinbaseWalletSDK } = await import("./coinbaseWebSDK.js");
+      const { connectCoinbaseWalletSDK } = await import("./coinbase-web.js");
       const provider = await args.providerFactory();
       const [connectedAccount, connectedChain, doDisconnect, doSwitchChain] =
         await connectCoinbaseWalletSDK(options, emitter, provider);
@@ -100,6 +101,7 @@ export function coinbaseWalletSDK(args: {
         client: options.client,
         walletType: COINBASE,
         walletAddress: account.address,
+        chainId: chain.id,
       });
       // return account
       return account;

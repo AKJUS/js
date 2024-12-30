@@ -34,9 +34,12 @@ import {
   DISCORD_ICON,
   FACEBOOK_ICON,
   FARCASTER_ICON,
+  GITHUB_ICON,
   GOOGLE_ICON,
   LINE_ICON,
+  STEAM_ICON,
   TELEGRAM_ICON,
+  TWITCH_ICON,
   X_ICON,
 } from "../icons/svgs.js";
 import type { ModalState } from "./ConnectModal.js";
@@ -61,6 +64,9 @@ const socialIcons = {
   x: X_ICON,
   farcaster: FARCASTER_ICON,
   telegram: TELEGRAM_ICON,
+  github: GITHUB_ICON,
+  twitch: TWITCH_ICON,
+  steam: STEAM_ICON,
 };
 
 type InAppWalletFormUIProps = {

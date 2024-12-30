@@ -1,6 +1,7 @@
 import { Suspense, useRef, useState } from "react";
 import { defineChain } from "../../../../chains/utils.js";
 import type { ThirdwebClient } from "../../../../client/client.js";
+import { isEcosystemWallet } from "../../../../wallets/ecosystem/is-ecosystem-wallet.js";
 import { linkProfile } from "../../../../wallets/in-app/web/lib/auth/index.js";
 import type { Wallet } from "../../../../wallets/interfaces/wallet.js";
 import type { EcosystemWalletId } from "../../../../wallets/wallet-types.js";
@@ -27,6 +28,7 @@ export function WalletAuth(props: {
   inAppLocale: InAppWalletLocale;
   onBack: () => void;
   walletConnect: { projectId?: string } | undefined;
+  isLinking: boolean;
   meta?: {
     title?: string;
     titleIconUrl?: string;
@@ -37,12 +39,18 @@ export function WalletAuth(props: {
 }) {
   const { wallet, done } = props;
   const addConnectedWallet = useAddConnectedWallet();
-  const walletToConnect = useRef<Wallet>();
+  const walletToConnect = useRef<Wallet>(undefined);
   const [status, setStatus] = useState<"loading" | "error" | "selecting">(
     "selecting",
   );
   const [error, setError] = useState<string | undefined>();
   const [showAll, setShowAll] = useState<boolean>(false);
+  const ecosystem = isEcosystemWallet(wallet)
+    ? {
+        id: wallet.id,
+        partnerId: wallet.getConfig()?.partnerId,
+      }
+    : undefined;
 
   const back = () => {
     setStatus("selecting");
@@ -54,15 +62,25 @@ export function WalletAuth(props: {
     setStatus("loading");
     walletToConnect.current = walletToLink;
     try {
-      await linkProfile({
-        client: props.client,
-        strategy: "wallet",
-        wallet: walletToLink,
-        chain: wallet.getChain() || defineChain(1),
-      }).catch((e) => {
-        setError(e.message);
-        throw e;
-      });
+      if (props.isLinking) {
+        await linkProfile({
+          client: props.client,
+          strategy: "wallet",
+          wallet: walletToLink,
+          chain: wallet.getChain() || defineChain(1),
+          ecosystem,
+        }).catch((e) => {
+          setError(e.message);
+          throw e;
+        });
+      } else {
+        await wallet.connect({
+          client: props.client,
+          strategy: "wallet",
+          wallet: walletToLink,
+          chain: walletToLink.getChain() || defineChain(1),
+        });
+      }
       addConnectedWallet(walletToLink);
       done();
     } catch {
@@ -113,7 +131,12 @@ export function WalletAuth(props: {
         size={props.size}
         meta={props.meta || {}}
         walletConnect={props.walletConnect}
-        modalHeader={{ title: props.inAppLocale.linkWallet, onBack: back }}
+        modalHeader={{
+          title: props.isLinking
+            ? props.inAppLocale.linkWallet
+            : props.inAppLocale.signInWithWallet,
+          onBack: back,
+        }}
         walletIdsToHide={["inApp"]}
         disableSelectionDataReset={true}
       />
@@ -123,7 +146,14 @@ export function WalletAuth(props: {
   return (
     <Container animate="fadein" fullHeight flex="column">
       <Container p="lg">
-        <ModalHeader title={props.inAppLocale.linkWallet} onBack={back} />
+        <ModalHeader
+          title={
+            props.isLinking
+              ? props.inAppLocale.linkWallet
+              : props.inAppLocale.signInWithWallet
+          }
+          onBack={back}
+        />
       </Container>
 
       <Container

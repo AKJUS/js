@@ -1,25 +1,39 @@
 import { notFound, redirect } from "next/navigation";
-import { ContractEditModulesPage } from "../../../../../../contract-ui/tabs/manage/page";
+import { localhost } from "thirdweb/chains";
+import { getRawAccount } from "../../../../../account/settings/getAccount";
 import { getContractPageParamsInfo } from "../_utils/getContractFromParams";
 import { getContractPageMetadata } from "../_utils/getContractPageMetadata";
+import { ContractEditModulesPage } from "./ContractEditModulesPage";
+import { ContractEditModulesPageClient } from "./ContractEditModulesPage.client";
 
 export default async function Page(props: {
-  params: {
+  params: Promise<{
     contractAddress: string;
     chain_id: string;
-  };
+  }>;
 }) {
-  const info = await getContractPageParamsInfo(props.params);
+  const params = await props.params;
+  const info = await getContractPageParamsInfo(params);
 
   if (!info) {
     notFound();
   }
 
-  const { isModularCore } = await getContractPageMetadata(info.contract);
+  const { contract } = info;
 
-  if (!isModularCore) {
-    redirect(`/${props.params.chain_id}/${props.params.contractAddress}`);
+  const account = await getRawAccount();
+
+  if (contract.chain.id === localhost.id) {
+    return (
+      <ContractEditModulesPageClient contract={contract} twAccount={account} />
+    );
   }
 
-  return <ContractEditModulesPage contract={info.contract} />;
+  const { isModularCore } = await getContractPageMetadata(contract);
+
+  if (!isModularCore) {
+    redirect(`/${params.chain_id}/${params.contractAddress}`);
+  }
+
+  return <ContractEditModulesPage contract={contract} twAccount={account} />;
 }

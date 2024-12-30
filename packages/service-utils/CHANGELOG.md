@@ -1,5 +1,75 @@
 # @thirdweb-dev/service-utils
 
+## 0.5.1
+
+### Patch Changes
+
+- [#5728](https://github.com/thirdweb-dev/js/pull/5728) [`a077023`](https://github.com/thirdweb-dev/js/commit/a0770238d45f831c50a7c6b7bafa2e45a749d49f) Thanks [@jnsdls](https://github.com/jnsdls)! - allow passing `null` to service scope, do not validate domains/bundleids when using secretKey auth method
+
+- [#5724](https://github.com/thirdweb-dev/js/pull/5724) [`90a16da`](https://github.com/thirdweb-dev/js/commit/90a16da48ef2d0f1f31fc4753f42b347d782da2c) Thanks [@gregfromstl](https://github.com/gregfromstl)! - Accept Request in authorizeNode
+
+## 0.5.0
+
+### Minor Changes
+
+- [#5708](https://github.com/thirdweb-dev/js/pull/5708) [`3ec808d`](https://github.com/thirdweb-dev/js/commit/3ec808dc782489ecf8cde136b36106793babe7ca) Thanks [@joaquim-verges](https://github.com/joaquim-verges)! - Update /use endpoint and types to v2
+
+## 0.4.52
+
+### Patch Changes
+
+- [#5670](https://github.com/thirdweb-dev/js/pull/5670) [`e702490`](https://github.com/thirdweb-dev/js/commit/e702490f2ff5e2b7d6b28c06731af880583cf8bc) Thanks [@arcoraven](https://github.com/arcoraven)! - Add modelName, sessionId, requestId to usage
+
+## 0.4.51
+
+### Patch Changes
+
+- [#5542](https://github.com/thirdweb-dev/js/pull/5542) [`8aa454c`](https://github.com/thirdweb-dev/js/commit/8aa454cbbbc2079749fa8250102ab0307d1b33af) Thanks [@arcoraven](https://github.com/arcoraven)! - feat: add promptTokens and completionTokens fields to usage
+
+## 0.4.50
+
+### Patch Changes
+
+- [#5477](https://github.com/thirdweb-dev/js/pull/5477) [`6bd9683`](https://github.com/thirdweb-dev/js/commit/6bd968362ad29709a30ad10c68f72264fd7124d0) Thanks [@arcoraven](https://github.com/arcoraven)! - chore: Allow optional includeUsage (default: true)
+
+## 0.4.49
+
+### Patch Changes
+
+- [#5409](https://github.com/thirdweb-dev/js/pull/5409) [`e841bfe`](https://github.com/thirdweb-dev/js/commit/e841bfe0817e190d7ba3f17cc6d953ba0b60c64f) Thanks [@iuwqyir](https://github.com/iuwqyir)! - remove nebula scope
+
+## 0.4.48
+
+### Patch Changes
+
+- [#5401](https://github.com/thirdweb-dev/js/pull/5401) [`040e478`](https://github.com/thirdweb-dev/js/commit/040e478ad6cf630dedf666eac7abeb668d323666) Thanks [@iuwqyir](https://github.com/iuwqyir)! - Added nebula service scope
+
+## 0.4.47
+
+### Patch Changes
+
+- [#5169](https://github.com/thirdweb-dev/js/pull/5169) [`f23911e`](https://github.com/thirdweb-dev/js/commit/f23911e1da6c7a1817b9c1fa22d7ad72b2fde0c9) Thanks [@gregfromstl](https://github.com/gregfromstl)! - Reduce published even action parsing strictness
+
+## 0.4.46
+
+### Patch Changes
+
+- [#5150](https://github.com/thirdweb-dev/js/pull/5150) [`9fadbcc`](https://github.com/thirdweb-dev/js/commit/9fadbcc17abfe302933f7b860ab7c3b4fb577789) Thanks [@jnsdls](https://github.com/jnsdls)! - update dependencies
+
+- [#5083](https://github.com/thirdweb-dev/js/pull/5083) [`795e9c1`](https://github.com/thirdweb-dev/js/commit/795e9c13a4f33d9afec82302409a1a90719242a8) Thanks [@gregfromstl](https://github.com/gregfromstl)! - Adds ecosystem headers to extractAuthorizationData result
+
+## 0.4.45
+
+### Patch Changes
+
+- [#5072](https://github.com/thirdweb-dev/js/pull/5072) [`9da5cd7`](https://github.com/thirdweb-dev/js/commit/9da5cd7d49aa331ccb88cdcbdf13da4f992c189b) Thanks [@iuwqyir](https://github.com/iuwqyir)! - Adds insight scope to api key and exposes cacheOptions for node auth
+
+## 0.4.44
+
+### Patch Changes
+
+- [#5029](https://github.com/thirdweb-dev/js/pull/5029) [`da9f196`](https://github.com/thirdweb-dev/js/commit/da9f1964e4ae74ed5d33666788e2d16e4d56614d) Thanks [@jnsdls](https://github.com/jnsdls)! - update dependencies
+
 ## 0.4.43
 
 ### Patch Changes

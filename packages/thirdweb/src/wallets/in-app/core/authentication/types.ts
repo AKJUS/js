@@ -34,8 +34,8 @@ export type SocialAuthArgsType = {
 
 export type SingleStepAuthArgsType =
   | SocialAuthArgsType
-  | { strategy: "jwt"; jwt: string; encryptionKey: string }
-  | { strategy: "auth_endpoint"; payload: string; encryptionKey: string }
+  | { strategy: "jwt"; jwt: string; encryptionKey?: string }
+  | { strategy: "auth_endpoint"; payload: string; encryptionKey?: string }
   | {
       /**
        * @deprecated
@@ -100,6 +100,9 @@ export type AuthProvider =
   | "Coinbase"
   | "X"
   | "Line"
+  | "Twitch"
+  | "Steam"
+  | "GitHub"
   | "Farcaster"
   | "Telegram";
 
@@ -110,7 +113,7 @@ export type OAuthRedirectObject = {
 
 // TODO: type this better for each auth provider
 export type Profile = {
-  type: AuthOption | "wallet";
+  type: AuthOption;
   details: {
     id?: string;
     email?: string;
@@ -246,4 +249,10 @@ export type GetUser =
 export type GetAuthenticatedUserParams = {
   client: ThirdwebClient;
   ecosystem?: Ecosystem;
+};
+
+export type UnlinkParams = {
+  client: ThirdwebClient;
+  ecosystem?: Ecosystem;
+  profileToUnlink: Profile;
 };

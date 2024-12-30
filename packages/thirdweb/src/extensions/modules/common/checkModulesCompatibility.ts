@@ -1,4 +1,3 @@
-import {} from "abitype";
 import type { Chain } from "../../../chains/types.js";
 import type { ThirdwebClient } from "../../../client/client.js";
 import { eth_call } from "../../../rpc/actions/eth_call.js";
@@ -19,6 +18,11 @@ import {
   FN_SELECTOR as getModuleConfigSelector,
 } from "../__generated__/IModule/read/getModuleConfig.js";
 
+/**
+ * Check if the given modules are compatible with the given core contract
+ * @param options
+ * @modules
+ */
 export async function checkModulesCompatibility(options: {
   coreBytecode: string;
   moduleBytecodes: string[];

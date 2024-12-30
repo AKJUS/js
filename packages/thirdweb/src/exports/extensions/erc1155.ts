@@ -198,3 +198,13 @@ export {
 
 // Zora 1155 contract
 export { nextTokenId } from "../../extensions/erc1155/__generated__/Zora1155/read/nextTokenId.js";
+
+export {
+  mintToBatch,
+  type MintToBatchParams,
+} from "../../extensions/erc1155/write/mintToBatch.js";
+
+export {
+  mintAdditionalSupplyToBatch,
+  type MintAdditionalSupplyToBatchParams,
+} from "../../extensions/erc1155/write/mintAdditionalSupplyToBatch.js";

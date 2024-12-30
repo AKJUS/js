@@ -13,11 +13,21 @@ export default function GlobalError({
   // legitimate usecase
   // eslint-disable-next-line no-restricted-syntax
   useEffect(() => {
-    Sentry.captureException(error);
+    Sentry.withScope((scope) => {
+      scope.setTag("page-crashed", "true");
+      scope.setLevel("fatal");
+      Sentry.captureException(error, {
+        extra: {
+          crashedPage: true,
+          boundary: "global",
+          router: "app",
+        },
+      });
+    });
   }, [error]);
 
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body>
         <h2>Something went wrong!</h2>
         <button type="button" onClick={() => reset()}>

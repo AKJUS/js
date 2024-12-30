@@ -4,7 +4,7 @@ import { BadgeContainer, mobileViewport } from "../../../../stories/utils";
 import { type ActiveCouponResponse, ApplyCouponCardUI } from "./CouponCard";
 
 const meta = {
-  title: "billing/Coupons/ApplyCoupon",
+  title: "Billing/Coupons/ApplyCoupon",
   component: Story,
   parameters: {
     nextjs: {
@@ -59,6 +59,15 @@ function Story() {
           submit={statusStub(200)}
           onCouponApplied={undefined}
           prefillPromoCode="XYZ"
+          isPaymentSetup={true}
+        />
+      </BadgeContainer>
+
+      <BadgeContainer label="No Valid Payment setup">
+        <ApplyCouponCardUI
+          submit={statusStub(200)}
+          onCouponApplied={undefined}
+          isPaymentSetup={false}
         />
       </BadgeContainer>
 
@@ -66,6 +75,7 @@ function Story() {
         <ApplyCouponCardUI
           submit={statusStub(200)}
           onCouponApplied={undefined}
+          isPaymentSetup={true}
         />
       </BadgeContainer>
 
@@ -73,6 +83,7 @@ function Story() {
         <ApplyCouponCardUI
           submit={statusStub(400)}
           onCouponApplied={undefined}
+          isPaymentSetup={true}
         />
       </BadgeContainer>
 
@@ -80,6 +91,7 @@ function Story() {
         <ApplyCouponCardUI
           submit={statusStub(401)}
           onCouponApplied={undefined}
+          isPaymentSetup={true}
         />
       </BadgeContainer>
 
@@ -87,6 +99,7 @@ function Story() {
         <ApplyCouponCardUI
           submit={statusStub(409)}
           onCouponApplied={undefined}
+          isPaymentSetup={true}
         />
       </BadgeContainer>
 
@@ -94,6 +107,7 @@ function Story() {
         <ApplyCouponCardUI
           submit={statusStub(429)}
           onCouponApplied={undefined}
+          isPaymentSetup={true}
         />
       </BadgeContainer>
 
@@ -101,6 +115,7 @@ function Story() {
         <ApplyCouponCardUI
           submit={statusStub(500)}
           onCouponApplied={undefined}
+          isPaymentSetup={true}
         />
       </BadgeContainer>
       <Toaster richColors />

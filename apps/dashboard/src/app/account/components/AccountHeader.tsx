@@ -2,11 +2,14 @@
 
 import type { Project } from "@/api/projects";
 import type { Team } from "@/api/team";
+import { useThirdwebClient } from "@/constants/thirdweb.client";
 import { useDashboardRouter } from "@/lib/DashboardRouter";
 import { CustomConnectWallet } from "@3rdweb-sdk/react/components/connect-wallet";
-import { useAccount } from "@3rdweb-sdk/react/hooks/useApi";
+import type { Account } from "@3rdweb-sdk/react/hooks/useApi";
 import { useCallback, useState } from "react";
+import { useActiveWallet, useDisconnect } from "thirdweb/react";
 import { LazyCreateAPIKeyDialog } from "../../../components/settings/ApiKeys/Create/LazyCreateAPIKeyDialog";
+import { doLogout } from "../../login/auth-actions";
 import {
   type AccountHeaderCompProps,
   AccountHeaderDesktopUI,
@@ -15,30 +18,40 @@ import {
 
 export function AccountHeader(props: {
   teamsAndProjects: Array<{ team: Team; projects: Project[] }>;
+  account: Account;
 }) {
-  const myAccountQuery = useAccount();
   const router = useDashboardRouter();
-  const [isCreateProjectDialogOpen, setIsCreateProjectDialogOpen] =
-    useState(false);
+  const [createProjectDialogState, setCreateProjectDialogState] = useState<
+    { team: Team; isOpen: true } | { isOpen: false }
+  >({ isOpen: false });
+
+  const client = useThirdwebClient();
+  const wallet = useActiveWallet();
+  const { disconnect } = useDisconnect();
 
   const logout = useCallback(async () => {
-    // log out the user
     try {
-      await fetch("/api/auth/logout", {
-        method: "POST",
-      });
-      router.push("/login");
+      await doLogout();
+      if (wallet) {
+        disconnect(wallet);
+      }
+      router.refresh();
     } catch (e) {
       console.error("Failed to log out", e);
     }
-  }, [router]);
+  }, [router, disconnect, wallet]);
 
   const headerProps: AccountHeaderCompProps = {
     teamsAndProjects: props.teamsAndProjects,
     logout: logout,
-    connectButton: <CustomConnectWallet />,
-    createProject: () => setIsCreateProjectDialogOpen(true),
-    account: myAccountQuery.data,
+    connectButton: <CustomConnectWallet isLoggedIn={true} />,
+    createProject: (team: Team) =>
+      setCreateProjectDialogState({
+        team,
+        isOpen: true,
+      }),
+    account: props.account,
+    client,
   };
 
   return (
@@ -47,13 +60,20 @@ export function AccountHeader(props: {
       <AccountHeaderMobileUI {...headerProps} className="lg:hidden" />
 
       <LazyCreateAPIKeyDialog
-        open={isCreateProjectDialogOpen}
-        onOpenChange={setIsCreateProjectDialogOpen}
-        wording="project"
+        open={createProjectDialogState.isOpen}
+        onOpenChange={() =>
+          setCreateProjectDialogState({
+            isOpen: false,
+          })
+        }
         onCreateAndComplete={() => {
           // refresh projects
           router.refresh();
         }}
+        enableNebulaServiceByDefault={
+          createProjectDialogState.isOpen &&
+          createProjectDialogState.team.enabledScopes.includes("nebula")
+        }
       />
     </div>
   );

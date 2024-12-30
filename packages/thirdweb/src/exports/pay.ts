@@ -10,9 +10,9 @@ export {
   type GetBuyWithCryptoTransferParams,
 } from "../pay/buyWithCrypto/getTransfer.js";
 
-export {
-  type QuoteApprovalParams,
-  type QuoteTokenInfo,
+export type {
+  QuoteApprovalParams,
+  QuoteTokenInfo,
 } from "../pay/buyWithCrypto/commonTypes.js";
 
 export {
@@ -66,3 +66,13 @@ export type {
   PayTokenInfo,
   PayOnChainTransactionDetails,
 } from "../pay/utils/commonTypes.js";
+
+export {
+  convertFiatToCrypto,
+  type ConvertFiatToCryptoParams,
+} from "../pay/convert/fiatToCrypto.js";
+
+export {
+  convertCryptoToFiat,
+  type ConvertCryptoToFiatParams,
+} from "../pay/convert/cryptoToFiat.js";

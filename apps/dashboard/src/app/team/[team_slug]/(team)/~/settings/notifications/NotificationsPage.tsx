@@ -1,22 +1,10 @@
-"use client";
-
-import { Spinner } from "@/components/ui/Spinner/Spinner";
 import { Separator } from "@/components/ui/separator";
-import { useAccount } from "@3rdweb-sdk/react/hooks/useApi";
+import type { Account } from "@3rdweb-sdk/react/hooks/useApi";
 import { Notifications } from "components/settings/Account/Notifications";
 
-export const SettingsNotificationsPage = () => {
-  const meQuery = useAccount();
-  const account = meQuery.data;
-
-  if (!account) {
-    return (
-      <div className="flex min-h-[400px] items-center justify-center">
-        <Spinner className="size-10" />
-      </div>
-    );
-  }
-
+export const SettingsNotificationsPage = (props: {
+  account: Account;
+}) => {
   return (
     <div>
       <h1 className="mb-0.5 font-semibold text-2xl tracking-tight">
@@ -28,7 +16,7 @@ export const SettingsNotificationsPage = () => {
       </p>
 
       <Separator />
-      <Notifications account={account} />
+      <Notifications account={props.account} />
     </div>
   );
 };

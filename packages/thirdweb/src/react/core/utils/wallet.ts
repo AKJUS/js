@@ -7,6 +7,7 @@ import { resolveName } from "../../../extensions/ens/resolve-name.js";
 import { shortenAddress } from "../../../utils/address.js";
 import { parseAvatarRecord } from "../../../utils/ens/avatar.js";
 import { getWalletInfo } from "../../../wallets/__generated__/getWalletInfo.js";
+import { isEcosystemWallet } from "../../../wallets/ecosystem/is-ecosystem-wallet.js";
 import type { Account, Wallet } from "../../../wallets/interfaces/wallet.js";
 import type { WalletInfo } from "../../../wallets/wallet-info.js";
 import type { WalletId } from "../../../wallets/wallet-types.js";
@@ -77,7 +78,8 @@ export function useEnsAvatar(options: {
 }
 
 /**
- * @internal
+ * @internal This hook is only being used in our react-native package
+ * It can be removed once we migrate the RN UI code to our headless components (AccountProvider, AccountName etc.)
  */
 export function useConnectedWalletDetails(
   client: ThirdwebClient,
@@ -222,7 +224,7 @@ export function hasSponsoredTransactionsEnabled(wallet: Wallet | undefined) {
       sponsoredTransactionsEnabled = options.gasless;
     }
   }
-  if (wallet && wallet.id === "inApp") {
+  if (wallet && (wallet.id === "inApp" || isEcosystemWallet(wallet))) {
     const options = (wallet as Wallet<"inApp">).getConfig();
     if (options && "smartAccount" in options && options.smartAccount) {
       const smartOptions = options.smartAccount;

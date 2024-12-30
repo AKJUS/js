@@ -27,6 +27,7 @@ const POPULAR = {
     "thirdweb.eth/DropERC721",
     "thirdweb.eth/MarketplaceV3",
     "thirdweb.eth/AccountFactory",
+    "0xaF3202F6bAEbA50d37e0d4B0b870455EDF198D7c/BurnMintERC677",
     "thirdweb.eth/DropERC1155",
     "thirdweb.eth/TokenERC20",
     "thirdweb.eth/NFTStake",
@@ -93,10 +94,9 @@ const MARKETS = {
 const MODULAR_CONTRACTS = {
   id: "modular-contracts",
   name: "modular",
-  displayName: "Modular Contracts (Beta)",
+  displayName: "Modular Contracts",
   description:
     "Collection of highly customizable and upgradeable smart contracts built with the modular contracts framework.",
-  isBeta: true,
   contracts: [
     // erc721 drop
     [
@@ -309,5 +309,3 @@ function isExploreCategory(category: string): category is ExploreCategoryName {
 export const EXPLORE_PAGE_DATA = Object.values(CATEGORIES).filter((v) =>
   "showInExplore" in v ? v.showInExplore !== false : true,
 );
-
-export const ALL_CATEGORIES = Object.values(CATEGORIES).map((v) => v.id);

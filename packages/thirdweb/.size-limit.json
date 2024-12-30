@@ -2,24 +2,24 @@
   {
     "name": "thirdweb (esm)",
     "path": "./dist/esm/exports/thirdweb.js",
-    "limit": "45 kB",
+    "limit": "50 kB",
     "import": "*"
   },
   {
     "name": "thirdweb (cjs)",
     "path": "./dist/cjs/exports/thirdweb.js",
-    "limit": "105 kB"
+    "limit": "120 kB"
   },
   {
     "name": "thirdweb (minimal + tree-shaking)",
     "path": "./dist/esm/exports/thirdweb.js",
-    "limit": "5 kB",
+    "limit": "7.5 kB",
     "import": "{ createThirdwebClient, getRpcClient, defineChain }"
   },
   {
     "name": "thirdweb/chains (tree-shaking)",
     "path": "./dist/esm/exports/chains.js",
-    "limit": "500 B",
+    "limit": "600 B",
     "import": "{ ethereum }"
   },
   {

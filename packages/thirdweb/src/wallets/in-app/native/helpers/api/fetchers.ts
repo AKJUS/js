@@ -1,6 +1,7 @@
 import type { ThirdwebClient } from "../../../../../client/client.js";
 import type { Hex } from "../../../../../utils/encoding/hex.js";
 import { getClientFetch } from "../../../../../utils/fetch.js";
+import { stringify } from "../../../../../utils/json.js";
 import { randomBytesHex } from "../../../../../utils/random.js";
 import type { ClientScopedStorage } from "../../../core/authentication/client-scoped-storage.js";
 import type { UserDetailsApiType } from "../../../core/authentication/types.js";
@@ -14,10 +15,12 @@ import { createErrorMessage } from "../errors.js";
 
 const EMBEDDED_WALLET_TOKEN_HEADER = "embedded-wallet-token";
 const PAPER_CLIENT_ID_HEADER = "x-thirdweb-client-id";
+const ECOSYSTEM_ID_HEADER = "x-ecosystem-id";
+const ECOSYSTEM_PARTNER_ID_HEADER = "x-ecosystem-partner-id";
 
 let sessionNonce: Hex | undefined = undefined;
 
-export function getSessionHeaders() {
+function getSessionHeaders() {
   if (!sessionNonce) {
     sessionNonce = randomBytesHex(16);
   }
@@ -33,7 +36,7 @@ export const verifyClientId = async (client: ThirdwebClient) => {
     headers: {
       ...getSessionHeaders(),
     },
-    body: JSON.stringify({ clientId: client.clientId, parentDomain: "" }),
+    body: stringify({ clientId: client.clientId, parentDomain: "" }),
   });
   if (!resp.ok) {
     const error = await resp.json();
@@ -63,6 +66,12 @@ export async function authFetchEmbeddedWalletUser(args: {
           authTokenClient || ""
         }`,
         [PAPER_CLIENT_ID_HEADER]: client.clientId,
+        ...(storage.ecosystem
+          ? {
+              [ECOSYSTEM_ID_HEADER]: storage.ecosystem.id,
+              [ECOSYSTEM_PARTNER_ID_HEADER]: storage.ecosystem?.partnerId,
+            }
+          : {}),
         ...getSessionHeaders(),
       }
     : {
@@ -70,6 +79,12 @@ export async function authFetchEmbeddedWalletUser(args: {
           authTokenClient || ""
         }`,
         [PAPER_CLIENT_ID_HEADER]: client.clientId,
+        ...(storage.ecosystem
+          ? {
+              [ECOSYSTEM_ID_HEADER]: storage.ecosystem.id,
+              [ECOSYSTEM_PARTNER_ID_HEADER]: storage.ecosystem?.partnerId,
+            }
+          : {}),
         ...getSessionHeaders(),
       };
 
@@ -141,7 +156,7 @@ export async function storeUserShares({
     props: {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
+      body: stringify({
         walletAddress,
         maybeEncryptedRecoveryShares,
         authShare,
@@ -154,7 +169,7 @@ export async function storeUserShares({
     const error = await resp.json();
 
     throw new Error(
-      `Something went wrong storing user wallet shares: ${JSON.stringify(
+      `Something went wrong storing user wallet shares: ${stringify(
         error.message,
         null,
         2,
@@ -179,7 +194,7 @@ export async function getUserShares(args: {
   if (!resp.ok) {
     const error = await resp.json();
     throw new Error(
-      `Something went wrong getting user's wallet: ${JSON.stringify(
+      `Something went wrong getting user's wallet: ${stringify(
         error.message,
         null,
         2,

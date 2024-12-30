@@ -7,7 +7,7 @@ export function InlineCode({
   return (
     <code
       className={cn(
-        "inline-block rounded bg-muted px-2 font-mono text-sm",
+        "mx-0.5 inline rounded-lg border border-border bg-muted px-[0.4em] py-[0.25em] font-mono text-[0.85em] text-foreground",
         className,
       )}
     >

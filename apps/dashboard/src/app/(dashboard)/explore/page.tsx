@@ -1,10 +1,3 @@
-import { ChakraProviderSetup } from "@/components/ChakraProviderSetup";
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbList,
-  BreadcrumbPage,
-} from "@/components/ui/breadcrumb";
 import { ContractRow } from "components/explore/contract-row";
 import { DeployUpsellCard } from "components/explore/upsells/deploy-your-own";
 import { PublishUpsellCard } from "components/explore/upsells/publish-submit";
@@ -12,25 +5,22 @@ import { EXPLORE_PAGE_DATA } from "data/explore";
 import type { Metadata } from "next";
 import { Fragment } from "react";
 
+const title = "List of smart contracts for EVM Developers";
+const description =
+  "A list of Ethereum smart contract templates for web3 developers, including the most popular evm smart contracts for dapps, NFTs and more.";
+
 export const metadata: Metadata = {
-  title: "Explore | Smart Contracts",
-  description:
-    "Browse a large collection of ready-to-deploy contracts that have been built by thirdweb and other contract developers. Find a contract for your specific app's or game's needs.",
+  title,
+  description,
   openGraph: {
-    title: "thirdweb Explore: Smart Contracts & Protocols",
+    title,
+    description,
   },
 };
 
 export default async function ExplorePage() {
   return (
     <div className="flex flex-col">
-      <Breadcrumb className="border-border border-b px-6 py-4">
-        <BreadcrumbList>
-          <BreadcrumbItem>
-            <BreadcrumbPage>Explore</BreadcrumbPage>
-          </BreadcrumbItem>
-        </BreadcrumbList>
-      </Breadcrumb>
       <div className="container flex flex-col gap-4 py-8">
         <h1 className="mb-3 font-bold text-3xl tracking-tighter lg:text-5xl">
           Explore
@@ -53,10 +43,7 @@ export default async function ExplorePage() {
         </div>
 
         <div className="h-16" />
-        {/* TODO: remove this once we update the deploy upsell card */}
-        <ChakraProviderSetup>
-          <DeployUpsellCard />
-        </ChakraProviderSetup>
+        <DeployUpsellCard />
       </div>
     </div>
   );

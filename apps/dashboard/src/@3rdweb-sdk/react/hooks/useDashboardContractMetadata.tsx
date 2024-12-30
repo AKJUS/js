@@ -18,7 +18,7 @@ export function useDashboardContractMetadata(contract: ThirdwebContract) {
   });
 }
 
-type DashboardContractMetadata = {
+export type DashboardContractMetadata = {
   name: string;
   symbol: string;
   image: string;
@@ -48,7 +48,7 @@ export async function fetchDashboardContractMetadata(
   if (compilerMetadata?.name.includes(":")) {
     const _name = compilerMetadata.name.split(":")[1];
     if (_name) {
-      compilerMetadata.name = compilerMetadata.name.split(":")[1];
+      compilerMetadata.name = _name;
     }
   }
 

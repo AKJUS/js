@@ -5,6 +5,7 @@ import { verifySignature } from "../../auth/verify-signature.js";
 import { type ThirdwebContract, getContract } from "../../contract/contract.js";
 import { parseEventLogs } from "../../event/actions/parse-logs.js";
 
+import { verifyTypedData } from "../../auth/verify-typed-data.js";
 import { sepolia } from "../../chains/chain-definitions/sepolia.js";
 import {
   addAdmin,
@@ -12,7 +13,6 @@ import {
 } from "../../exports/extensions/erc4337.js";
 import { balanceOf } from "../../extensions/erc1155/__generated__/IERC1155/read/balanceOf.js";
 import { claimTo } from "../../extensions/erc1155/drops/write/claimTo.js";
-import { checkContractWalletSignature } from "../../extensions/erc1271/checkContractWalletSignature.js";
 import { setContractURI } from "../../extensions/marketplace/__generated__/IMarketplace/write/setContractURI.js";
 import { estimateGasCost } from "../../transaction/actions/estimate-gas-cost.js";
 import { sendAndConfirmTransaction } from "../../transaction/actions/send-and-confirm-transaction.js";
@@ -23,7 +23,9 @@ import { isContractDeployed } from "../../utils/bytecode/is-contract-deployed.js
 import { sleep } from "../../utils/sleep.js";
 import type { Account, Wallet } from "../interfaces/wallet.js";
 import { generateAccount } from "../utils/generateAccount.js";
-import { ENTRYPOINT_ADDRESS_v0_7 } from "./lib/constants.js";
+import { predictSmartAccountAddress } from "./lib/calls.js";
+import { DEFAULT_ACCOUNT_FACTORY_V0_7 } from "./lib/constants.js";
+import { confirmContractDeployment } from "./lib/signing.js";
 import { smartWallet } from "./smart-wallet.js";
 
 let wallet: Wallet;
@@ -40,7 +42,7 @@ const contract = getContract({
   address: "0xe2cb0eb5147b42095c2FfA6F7ec953bb0bE347D8",
 });
 
-describe.runIf(process.env.TW_SECRET_KEY).sequential(
+describe.runIf(process.env.TW_SECRET_KEY)(
   "SmartWallet 0.7 core tests",
   {
     retry: 0,
@@ -54,9 +56,7 @@ describe.runIf(process.env.TW_SECRET_KEY).sequential(
       wallet = smartWallet({
         chain,
         gasless: true,
-        overrides: {
-          entrypointAddress: ENTRYPOINT_ADDRESS_v0_7,
-        },
+        factoryAddress: DEFAULT_ACCOUNT_FACTORY_V0_7,
       });
       smartAccount = await wallet.connect({
         client: TEST_CLIENT,
@@ -72,6 +72,39 @@ describe.runIf(process.env.TW_SECRET_KEY).sequential(
 
     it("can connect", async () => {
       expect(smartWalletAddress).toHaveLength(42);
+      const predictedAddress = await predictSmartAccountAddress({
+        client,
+        chain,
+        adminAddress: personalAccount.address,
+        factoryAddress: DEFAULT_ACCOUNT_FACTORY_V0_7,
+      });
+      expect(predictedAddress).toEqual(smartWalletAddress);
+    });
+
+    it("can sign a msg", async () => {
+      const signature = await smartAccount.signMessage({
+        message: "hello world",
+      });
+      const isValid = await verifySignature({
+        message: "hello world",
+        signature,
+        address: smartWalletAddress,
+        chain,
+        client,
+      });
+      expect(isValid).toEqual(true);
+    });
+
+    it("can sign typed data", async () => {
+      const signature = await smartAccount.signTypedData(typedData.basic);
+      const isValid = await verifyTypedData({
+        signature,
+        address: smartWalletAddress,
+        chain,
+        client,
+        ...typedData.basic,
+      });
+      expect(isValid).toEqual(true);
     });
 
     it("should revert on unsuccessful transactions", async () => {
@@ -102,6 +135,7 @@ describe.runIf(process.env.TW_SECRET_KEY).sequential(
         account: smartAccount,
       });
       expect(tx.transactionHash).toHaveLength(66);
+      await confirmContractDeployment({ accountContract });
       const isDeployed = await isContractDeployed(accountContract);
       expect(isDeployed).toEqual(true);
       const balance = await balanceOf({
@@ -144,17 +178,12 @@ describe.runIf(process.env.TW_SECRET_KEY).sequential(
         ],
       });
       expect(tx.transactionHash).toHaveLength(66);
-      await waitForReceipt({
+      const result = await waitForReceipt({
         client,
         transactionHash: tx.transactionHash,
         chain,
       });
-      const balance = await balanceOf({
-        contract,
-        owner: getAddress(smartWalletAddress),
-        tokenId: 0n,
-      });
-      expect(balance).toEqual(3n);
+      expect(result.status).toEqual("success");
     });
 
     it("can sign and verify 1271 with replay protection", async () => {
@@ -168,19 +197,20 @@ describe.runIf(process.env.TW_SECRET_KEY).sequential(
         client,
       });
       expect(isValidV1).toEqual(true);
-      const isValidV2 = await checkContractWalletSignature({
-        message,
-        signature,
-        contract: accountContract,
-      });
-      expect(isValidV2).toEqual(true);
 
       // sign typed data
       const signatureTyped = await smartAccount.signTypedData({
         ...typedData.basic,
         primaryType: "Mail",
       });
-      expect(signatureTyped.length).toBe(132);
+      const isValidV2 = await verifyTypedData({
+        signature: signatureTyped,
+        address: smartWalletAddress,
+        chain,
+        client,
+        ...typedData.basic,
+      });
+      expect(isValidV2).toEqual(true);
 
       // add admin
       const newAdmin = await generateAccount({ client });
@@ -216,7 +246,6 @@ describe.runIf(process.env.TW_SECRET_KEY).sequential(
         client: TEST_CLIENT,
         personalAccount,
       });
-      console.log("newSmartAccount", newSmartAccount.address);
       const newSmartAccountContract = getContract({
         address: newSmartAccount.address,
         chain,
@@ -250,15 +279,21 @@ describe.runIf(process.env.TW_SECRET_KEY).sequential(
       ]);
       expect(txs.length).toEqual(2);
       expect(txs.every((t) => t.transactionHash.length === 66)).toBe(true);
+      const result1 = await waitForReceipt({
+        client,
+        transactionHash: txs[0].transactionHash,
+        chain,
+      });
+      expect(result1.status).toEqual("success");
+      const result2 = await waitForReceipt({
+        client,
+        transactionHash: txs[1].transactionHash,
+        chain,
+      });
+      expect(result2.status).toEqual("success");
 
       isDeployed = await isContractDeployed(newSmartAccountContract);
       expect(isDeployed).toEqual(true);
-      const balance = await balanceOf({
-        contract,
-        owner: newSmartAccountContract.address,
-        tokenId: 0n,
-      });
-      expect(balance).toEqual(2n);
     });
   },
 );

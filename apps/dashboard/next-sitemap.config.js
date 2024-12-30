@@ -1,4 +1,5 @@
 // @ts-check
+
 /**
  *
  */
@@ -47,10 +48,14 @@ module.exports = {
     policies: [
       {
         userAgent: "*",
-        [process.env.VERCEL_ENV !== "preview" &&
-        process.env.VERCEL_ENV !== "development"
-          ? "allow"
-          : "disallow"]: "/",
+        // allow all if production
+        allow: process.env.VERCEL_ENV === "production" ? ["/"] : [],
+        // disallow all if not production
+        disallow:
+          process.env.VERCEL_ENV !== "production"
+            ? ["/"]
+            : // disallow `/team` and `/team/*` if production
+              ["/team", "/team/*"],
       },
     ],
   },
@@ -77,8 +82,16 @@ module.exports = {
     };
   },
   additionalPaths: async (config) => {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const FRAMER_PATHS = require("./framer-rewrites");
     const allChains = await fetchChainsFromApi();
     return [
+      ...FRAMER_PATHS.map((path) => ({
+        loc: path,
+        changefreq: config.changefreq,
+        priority: config.priority,
+        lastmod: config.autoLastmod ? new Date().toISOString() : undefined,
+      })),
       ...allChains.map((chain) => {
         return {
           loc: `/${chain.slug}`,

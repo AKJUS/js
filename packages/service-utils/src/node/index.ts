@@ -6,39 +6,25 @@ import type {
 } from "node:http";
 import type { CoreServiceConfig } from "../core/api.js";
 import { authorize } from "../core/authorize/index.js";
-import type { AuthorizationInput } from "../core/authorize/index.js";
+import type {
+  AuthorizationInput,
+  CacheOptions,
+} from "../core/authorize/index.js";
 import type { AuthorizationResult } from "../core/authorize/types.js";
 import type { CoreAuthInput } from "../core/types.js";
 export * from "../core/usage.js";
 export * from "../core/rateLimit/index.js";
 export * from "../core/services.js";
-export * from "../core/usageLimit/index.js";
 type NodeServiceConfig = CoreServiceConfig;
 
 export type AuthInput = CoreAuthInput & {
-  req: IncomingMessage;
+  req: IncomingMessage | Request;
 };
 
-/**
- *
- * @param {AuthInput['req']} authInput.req - The incoming request from which information will be pulled from. These information includes (checks are in order and terminates on first match):
- * - clientId: Checks header `x-client-id`, search param `clientId`
- * - bundleId: Checks header `x-bundle-id`, search param `bundleId`
- * - secretKey: Checks header `x-secret-key`
- * - origin (the requesting domain): Checks header `origin`, `referer`
- * @param {AuthInput['clientId']} authInput.clientId - Overrides any clientId found on the `req` object
- * @param {AuthInput['targetAddress']} authInput.targetAddress - Only used in smart wallets to determine if the request is authorized to interact with the target address.
- * @param {NodeServiceConfig['enforceAuth']} serviceConfig - Always `true` unless you need to turn auth off. Tells the service whether or not to enforce auth.
- * @param {NodeServiceConfig['apiUrl']} serviceConfig.apiUrl - The url of the api server to fetch information for verification. `https://api.thirdweb.com` for production and `https://api.staging.thirdweb.com` for staging
- * @param {NodeServiceConfig['serviceApiKey']} serviceConfig.serviceApiKey - secret key to be used authenticate the caller of the api-server. Check the api-server's env variable for the keys.
- * @param {NodeServiceConfig['serviceScope']} serviceConfig.serviceScope - The service that we are requesting authorization for. E.g. `relayer`, `rpc`, 'bundler', 'storage' etc.
- * @param {NodeServiceConfig['serviceAction']} serviceConfig.serviceAction - Needed when the `serviceScope` is `storage`. Can be either `read` or `write`.
- * @param {NodeServiceConfig['useWalletAuth']} serviceConfig.useWalletAuth - If true it pings the `wallet/me` or else, `account/me`. You most likely can leave this as false.
- * @returns {AuthorizationResult} authorizationResult - contains if the request is authorized, and information about the account if it is authorized. Otherwise, it contains the error message and status code.
- */
 export async function authorizeNode(
   authInput: AuthInput,
   serviceConfig: NodeServiceConfig,
+  cacheOptions?: CacheOptions,
 ): Promise<AuthorizationResult> {
   let authData: AuthorizationInput;
   try {
@@ -60,18 +46,24 @@ export async function authorizeNode(
     };
   }
 
-  return await authorize(authData, serviceConfig);
+  return await authorize(authData, serviceConfig, cacheOptions);
+}
+
+function isNodeHeaders(
+  headers: IncomingHttpHeaders | Headers,
+): headers is IncomingHttpHeaders {
+  return typeof headers === "object" && !("get" in headers);
 }
 
 function getHeader(
-  headers: IncomingHttpHeaders,
+  headers: IncomingHttpHeaders | Headers,
   headerName: string,
 ): string | null {
-  const header = headers[headerName];
-  if (Array.isArray(header)) {
-    return header?.[0] ?? null;
-  }
-  return header ?? null;
+  return isNodeHeaders(headers)
+    ? Array.isArray(headers[headerName])
+      ? (headers[headerName]?.[0] ?? null)
+      : (headers[headerName] ?? null)
+    : (headers.get(headerName) ?? null);
 }
 
 export function extractAuthorizationData(
@@ -82,7 +74,7 @@ export function extractAuthorizationData(
   try {
     requestUrl = new URL(
       authInput.req.url || "",
-      `http://${authInput.req.headers.host}`,
+      `http://${getHeader(authInput.req.headers, "host")}`,
     );
   } catch (error) {
     console.log("** Node URL Error **", error);
@@ -103,12 +95,23 @@ export function extractAuthorizationData(
   if (!clientId) {
     clientId = requestUrl.searchParams.get("clientId");
   }
+
   // bundle id from header is first preference
   let bundleId = getHeader(headers, "x-bundle-id");
 
   // next preference is search param
   if (!bundleId) {
     bundleId = requestUrl.searchParams.get("bundleId");
+  }
+
+  let ecosystemId = getHeader(headers, "x-ecosystem-id");
+  if (!ecosystemId) {
+    ecosystemId = requestUrl.searchParams.get("ecosystemId");
+  }
+
+  let ecosystemPartnerId = getHeader(headers, "x-ecosystem-partner-id");
+  if (!ecosystemPartnerId) {
+    ecosystemPartnerId = requestUrl.searchParams.get("ecosystemPartnerId");
   }
 
   let origin = getHeader(headers, "origin");
@@ -130,14 +133,6 @@ export function extractAuthorizationData(
   if (secretKey) {
     // hash the secret key
     secretKeyHash = hashSecretKey(secretKey);
-    // derive the client id from the secret key hash
-    const derivedClientId = deriveClientIdFromSecretKeyHash(secretKeyHash);
-    // if we already have a client id passed in we need to make sure they match
-    if (clientId && clientId !== derivedClientId) {
-      throw new Error("KEY_CONFLICT");
-    }
-    // otherwise set the client id to the derived client id (client id based off of secret key)
-    clientId = derivedClientId;
   }
 
   let jwt: null | string = null;
@@ -162,6 +157,8 @@ export function extractAuthorizationData(
     secretKeyHash,
     secretKey,
     clientId,
+    ecosystemId,
+    ecosystemPartnerId,
     origin,
     bundleId,
     targetAddress: authInput.targetAddress,
@@ -171,10 +168,6 @@ export function extractAuthorizationData(
 
 export function hashSecretKey(secretKey: string) {
   return createHash("sha256").update(secretKey).digest("hex");
-}
-
-export function deriveClientIdFromSecretKeyHash(secretKeyHash: string) {
-  return secretKeyHash.slice(0, 32);
 }
 
 export function logHttpRequest({
@@ -207,10 +200,10 @@ export function logHttpRequest({
         isAuthed,
         status: res.statusCode,
         statusMessage,
-        sdkName: headers["x-sdk-name"] ?? undefined,
-        sdkVersion: headers["x-sdk-version"] ?? undefined,
-        platform: headers["x-sdk-platform"] ?? undefined,
-        os: headers["x-sdk-os"] ?? undefined,
+        sdkName: getHeader(headers, "x-sdk-name"),
+        sdkVersion: getHeader(headers, "x-sdk-version"),
+        platform: getHeader(headers, "x-sdk-platform"),
+        os: getHeader(headers, "x-sdk-os"),
         latencyMs,
       }),
     );

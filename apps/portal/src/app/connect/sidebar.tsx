@@ -1,23 +1,13 @@
 import type { SideBar } from "@/components/Layouts/DocLayout";
-import {
-  DotNetIcon,
-  EcosystemWalletsIcon,
-  PayIcon,
-  ReactIcon,
-  TypeScriptIcon,
-  UnityIcon,
-  WalletsAuthIcon,
-  WalletsConnectIcon,
-  WalletsInAppIcon,
-  WalletsSmartIcon,
-} from "@/icons";
-import { CodeIcon, ExternalLink, ZapIcon } from "lucide-react";
+import { DotNetIcon, ReactIcon, TypeScriptIcon, UnityIcon } from "@/icons";
+import { ExternalLink } from "lucide-react";
 import { UnrealEngineIcon } from "../../icons/sdks/UnrealEngineIcon";
 
-const connectSlug = "/connect/sign-in";
+// TODO: move the following two slugs to walletSlug with updated docs
 const inAppSlug = "/connect/in-app-wallet";
+
+const walletSlug = "/connect/wallet";
 const aAslug = "/connect/account-abstraction";
-const ecosystemSlug = "/connect/ecosystems";
 const authSlug = "/connect/auth";
 const paySlug = "/connect/pay";
 
@@ -34,11 +24,6 @@ export const sidebar: SideBar = {
       href: "/connect/why-thirdweb",
     },
     {
-      name: "Quickstart",
-      href: "/connect/quickstart",
-      icon: <ZapIcon />,
-    },
-    {
       name: "Playground",
       href: "https://playground.thirdweb.com/",
       icon: <ExternalLink />,
@@ -49,183 +34,42 @@ export const sidebar: SideBar = {
       icon: <ExternalLink />,
     },
     { separator: true },
+    // Connect\
     {
-      name: "Get Started",
+      name: "Onboard Users",
+      expanded: true,
       isCollapsible: false,
       links: [
         {
-          name: "TypeScript",
-          href: "/typescript/v5",
-          icon: <TypeScriptIcon />,
+          name: "Overview",
+          href: `${walletSlug}/overview`,
         },
         {
-          name: "React",
-          href: "/react/v5",
-          icon: <ReactIcon />,
+          name: "Security",
+          href: `${walletSlug}/security`,
         },
         {
-          name: "React Native",
-          href: "/react-native/v5",
-          icon: <ReactIcon />,
+          name: "Get Started",
+          href: `${walletSlug}/get-started`,
         },
         {
-          name: "Dotnet",
-          href: "/dotnet",
-          icon: <DotNetIcon />,
+          name: "External Wallets",
+          href: `${walletSlug}/sign-in-methods/external-wallets`,
         },
         {
-          name: "Unity",
-          href: "/unity",
-          icon: <UnityIcon />,
-        },
-        {
-          name: "Unreal Engine",
-          href: "/unreal-engine",
-          icon: <UnrealEngineIcon />,
-        },
-      ],
-    },
-    { separator: true },
-    {
-      name: "Learn",
-      isCollapsible: false,
-      links: [
-        // Connect
-        {
-          name: "Sign-In",
-          icon: <WalletsConnectIcon />,
+          name: "In-App Wallets",
           links: [
-            {
-              name: "Overview",
-              href: `${connectSlug}/overview`,
-            },
-            {
-              name: "Get Started",
-              // expanded: true,
-              links: [
-                {
-                  name: "Connect Button",
-                  href: `${connectSlug}/ConnectButton`,
-                },
-                {
-                  name: "Connect Embed",
-                  href: `${connectSlug}/ConnectEmbed`,
-                },
-                {
-                  name: "Custom UI",
-                  href: `${connectSlug}/Custom-UI`,
-                },
-              ],
-            },
             {
               name: "Sign-In Methods",
-              links: [
-                {
-                  name: "Email & Phone",
-                  href: `${connectSlug}/methods/email-and-phone`,
-                },
-                {
-                  name: "Social Login",
-                  href: `${connectSlug}/methods/social-logins`,
-                },
-                {
-                  name: "External Wallets",
-                  href: `${connectSlug}/methods/external-wallets`,
-                },
-                {
-                  name: "Guest Mode",
-                  href: `${connectSlug}/methods/guest-mode`,
-                },
-              ],
+              href: `${walletSlug}/sign-in-methods/configure`,
             },
             {
-              name: "Customization",
-              links: [
-                {
-                  name: "Logo",
-                  href: `${connectSlug}/customization#logo`,
-                },
-                {
-                  name: "Compact Modal",
-                  href: `${connectSlug}/customization#compact-modal`,
-                },
-                {
-                  name: "Theme",
-                  href: `${connectSlug}/customization#theming`,
-                },
-                {
-                  name: "Localization",
-                  href: `${connectSlug}/customization#localization`,
-                },
-              ],
+              name: "Pregenerate Wallets",
+              href: `${walletSlug}/pregenerate-wallets`,
             },
             {
-              name: "Playground",
-              href: "https://playground.thirdweb.com/connect/sign-in/button",
-            },
-          ],
-        },
-
-        //In-App Wallets
-        {
-          name: "In-App Wallet",
-          icon: <WalletsInAppIcon />,
-          links: [
-            {
-              name: "Overview",
-              href: `${inAppSlug}/overview`,
-            },
-            {
-              name: "Security",
-              href: `${inAppSlug}/security`,
-            },
-            {
-              name: "Get Started",
-              links: [
-                {
-                  name: "TypeScript",
-                  href: "/typescript/v5/inAppWallet",
-                  icon: <TypeScriptIcon />,
-                },
-                {
-                  name: "React",
-                  href: "/react/v5/in-app-wallet/get-started",
-                  icon: <ReactIcon />,
-                },
-                {
-                  name: "React Native",
-                  // TODO - add react-native dedicated page
-                  href: "/react/v5/in-app-wallet/get-started",
-                  icon: <ReactIcon />,
-                },
-                {
-                  name: "Dotnet",
-                  href: "/dotnet/wallets/providers/in-app-wallet",
-                  icon: <DotNetIcon />,
-                },
-                {
-                  name: "Unity",
-                  href: "/unity/wallets/providers/in-app-wallet",
-                  icon: <UnityIcon />,
-                },
-              ],
-            },
-            {
-              name: "Guides",
-              links: [
-                {
-                  name: "Export Private Keys",
-                  href: `${inAppSlug}/guides/export-private-key`,
-                },
-                {
-                  name: "Link Multiple Profiles",
-                  href: `${inAppSlug}/guides/link-multiple-profiles`,
-                },
-                {
-                  name: "Retrieving Linked Profiles",
-                  href: `${inAppSlug}/guides/retrieve-linked-profiles`,
-                },
-              ],
+              name: "Guest Mode",
+              href: `${walletSlug}/sign-in-methods/guest`,
             },
             {
               name: "Custom Authentication",
@@ -257,59 +101,36 @@ export const sidebar: SideBar = {
                 },
               ],
             },
-            {
-              name: "Backend APIs",
-              href: `${inAppSlug}/guides/get-user-details`,
-            },
-            {
-              name: "FAQs",
-              href: `${inAppSlug}/faqs`,
-            },
           ],
         },
-        // Ecosystem Wallet
         {
           name: "Ecosystem Wallets",
-          icon: <EcosystemWalletsIcon />,
           links: [
             {
-              name: "Overview",
-              href: `${ecosystemSlug}/overview`,
+              name: "Set-up",
+              href: `${walletSlug}/ecosystem/set-up`,
             },
             {
-              name: "Security",
-              href: `${ecosystemSlug}/security`,
-            },
-            {
-              name: "Get Started",
-              href: `${ecosystemSlug}/get-started`,
+              name: "Ecosystem Portal",
+              href: `${walletSlug}/ecosystem/portal`,
             },
             {
               name: "Managing Ecosystem Permissions",
-              href: `${ecosystemSlug}/ecosystem-permissions`,
+              href: `${walletSlug}/ecosystem/permissions`,
             },
             {
               name: "Integrating with Partners",
-              href: `${ecosystemSlug}/integrating-partners`,
+              href: `${walletSlug}/ecosystem/integrating-partners`,
             },
             {
-              name: "Pregenerate Wallets",
-              href: `${ecosystemSlug}/pregenerate-wallets`,
-            },
-            {
-              name: "Ecosystem Wallet Explorer Page",
-              href: `${ecosystemSlug}/wallet-explorer`,
-            },
-            {
-              name: "FAQ",
-              href: `${ecosystemSlug}/faq`,
+              name: "Register with WalletConnect",
+              href: `${walletSlug}/ecosystem/register-walletconnect`,
             },
           ],
         },
         //Account abstraction
         {
           name: "Account Abstraction",
-          icon: <WalletsSmartIcon />,
           links: [
             {
               name: "Overview",
@@ -351,6 +172,10 @@ export const sidebar: SideBar = {
               ],
             },
             {
+              name: "ERC-20 Paymaster",
+              href: `${aAslug}/erc-20-paymaster`,
+            },
+            {
               name: "Account Factories",
               href: `${aAslug}/factories`,
             },
@@ -363,56 +188,31 @@ export const sidebar: SideBar = {
               href: `${aAslug}/sponsorship-rules`,
             },
             {
-              name: "Gasless",
-              isCollapsible: true,
-              links: [
-                {
-                  name: "Engine",
-                  href: `${aAslug}/gasless/engine`,
-                },
-                {
-                  name: "Biconomy",
-                  href: `${aAslug}/gasless/biconomy`,
-                },
-                {
-                  name: "OpenZeppelin",
-                  href: `${aAslug}/gasless/openzeppelin`,
-                },
-              ],
-            },
-            // {
-            // 	name: "References",
-            // 	isCollapsible: true,
-            // 	expanded: true,
-            // 	links: [
-            // 		{
-            // 			name: "React",
-            // 			href: `/references/typescript/v5/smartWallet`,
-            // 		},
-            // 		{
-            // 			name: "React Native",
-            // 			href: `/react-native/v0/wallets/smartwallet`,
-            // 		},
-            // 		{
-            // 			name: "TypeScript",
-            // 			href: `/references/wallets/v2/SmartWallet`,
-            // 		},
-            // 		{
-            // 			name: "Unity",
-            // 			href: `/unity/wallets/providers/smart-wallet`,
-            // 		},
-            // 	],
-            // },
-            {
               name: "FAQs",
               href: `${aAslug}/faq`,
             },
           ],
         },
-        // Auth
         {
-          name: "Auth (SIWE)",
-          icon: <WalletsAuthIcon />,
+          name: "Migrate to thirdweb",
+          href: `${walletSlug}/migrate-to-thirdweb`,
+        },
+        {
+          name: "FAQ",
+          href: `${walletSlug}/faq`,
+        },
+      ],
+    },
+    { separator: true },
+    // User identity
+    {
+      name: "User Identity",
+      isCollapsible: false,
+      links: [
+        // Auth
+        // TODO move to TS reference
+        {
+          name: "Sign In with Ethereum",
           links: [
             {
               name: "Get Started",
@@ -439,10 +239,35 @@ export const sidebar: SideBar = {
             },
           ],
         },
+        {
+          name: "Get User Profiles",
+          href: `${walletSlug}/user-management/get-user-profiles`,
+        },
+        {
+          name: "Link Multiple Identities",
+          href: `${walletSlug}/user-management/link-multiple-identity`,
+        },
+        {
+          name: "Export Private Keys",
+          href: `${walletSlug}/user-management/export-private-key`,
+        },
+        // TODO:
+        // {
+        //   name: "Deleting User Details",
+        //   href: `${walletSlug}/user-management/deleting-user-details`,
+        // },
+      ],
+    },
+    { separator: true },
+    // Blockchain API
+    // TODO Overview page?
+    {
+      name: "Onchain Interactions",
+      isCollapsible: false,
+      links: [
         // Pay
         {
-          name: "Pay",
-          icon: <PayIcon />,
+          name: "Bridge & Swap",
           links: [
             {
               name: "Overview",
@@ -526,43 +351,42 @@ export const sidebar: SideBar = {
             },
           ],
         },
-        // Blockchain API
+      ],
+    },
+    { separator: true },
+    {
+      name: "API References",
+      isCollapsible: false,
+      links: [
         {
-          name: "Blockchain API",
-          icon: <CodeIcon />,
-          href: "/connect/blockchain-api",
-          links: [
-            {
-              name: "TypeScript",
-              href: "/typescript/v5",
-              icon: <TypeScriptIcon />,
-            },
-            {
-              name: "React",
-              href: "/react/v5",
-              icon: <ReactIcon />,
-            },
-            {
-              name: "React Native",
-              href: "/react-native/v5",
-              icon: <ReactIcon />,
-            },
-            {
-              name: "Dotnet",
-              href: "/dotnet",
-              icon: <DotNetIcon />,
-            },
-            {
-              name: "Unity",
-              href: "/unity",
-              icon: <UnityIcon />,
-            },
-            {
-              name: "Unreal Engine",
-              href: "/unreal-engine",
-              icon: <UnrealEngineIcon />,
-            },
-          ],
+          name: "TypeScript",
+          href: "/typescript/v5",
+          icon: <TypeScriptIcon />,
+        },
+        {
+          name: "React",
+          href: "/react/v5",
+          icon: <ReactIcon />,
+        },
+        {
+          name: "React Native",
+          href: "/react-native/v5",
+          icon: <ReactIcon />,
+        },
+        {
+          name: "Dotnet",
+          href: "/dotnet",
+          icon: <DotNetIcon />,
+        },
+        {
+          name: "Unity",
+          href: "/unity",
+          icon: <UnityIcon />,
+        },
+        {
+          name: "Unreal Engine",
+          href: "/unreal-engine",
+          icon: <UnrealEngineIcon />,
         },
       ],
     },

@@ -22,6 +22,8 @@ export const GENERATE_RECOVERY_PASSWORD_LAMBDA_FUNCTION_V1 =
   "arn:aws:lambda:us-west-2:324457261097:function:recovery-share-password-GenerateRecoverySharePassw-bbE5ZbVAToil";
 export const GENERATE_RECOVERY_PASSWORD_LAMBDA_FUNCTION_V2 =
   "arn:aws:lambda:us-west-2:324457261097:function:lambda-thirdweb-auth-enc-key-prod-ThirdwebAuthEncKeyFunction";
+export const ENCLAVE_KMS_KEY_ARN =
+  "arn:aws:kms:us-west-2:324457261097:key/ccfb9ecd-f45d-4f37-864a-25fe72dcb49e";
 
 // TODO allow overriding domain
 const DOMAIN_URL_2023 = getThirdwebBaseUrl("inAppWallet");

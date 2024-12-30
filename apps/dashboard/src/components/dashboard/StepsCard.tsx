@@ -1,7 +1,7 @@
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 import { CheckIcon } from "lucide-react";
-import { useMemo } from "react";
+import { type JSX, useMemo } from "react";
 
 type Step = {
   title: string | JSX.Element;
@@ -57,7 +57,7 @@ export const StepsCard: React.FC<StepsCardProps> = ({
         </p>
       </div>
 
-      <div className="flex w-full flex-col gap-5">
+      <div className="flex w-full flex-col gap-7">
         {steps.map(({ children, ...step }, index) => {
           const showChildren =
             !step.completed || (step.completed && step.showCompletedChildren);
@@ -74,7 +74,7 @@ export const StepsCard: React.FC<StepsCardProps> = ({
 
               <div className="grow">
                 {/* Heading + Desc */}
-                <div className="mb-3 flex flex-col">
+                <div className="mb-1 flex flex-col">
                   {typeof step.title === "string" ? (
                     <h3
                       className={cn(

@@ -1,14 +1,15 @@
 import { notFound } from "next/navigation";
-import { ContractSourcesPage } from "../../../../../../contract-ui/tabs/sources/page";
 import { getContractPageParamsInfo } from "../_utils/getContractFromParams";
+import { ContractSourcesPage } from "./ContractSourcesPage";
 
 export default async function Page(props: {
-  params: {
+  params: Promise<{
     contractAddress: string;
     chain_id: string;
-  };
+  }>;
 }) {
-  const info = await getContractPageParamsInfo(props.params);
+  const params = await props.params;
+  const info = await getContractPageParamsInfo(params);
 
   if (!info) {
     notFound();

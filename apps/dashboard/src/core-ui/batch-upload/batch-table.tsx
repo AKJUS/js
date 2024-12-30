@@ -1,3 +1,4 @@
+import { CodeClient } from "@/components/ui/code/code.client";
 import { ToolTipLabel } from "@/components/ui/tooltip";
 import {
   Box,
@@ -27,7 +28,6 @@ import {
 import { useMemo } from "react";
 import { type Column, usePagination, useTable } from "react-table";
 import type { NFTInput } from "thirdweb/utils";
-import { CodeBlock, Text } from "tw-components";
 
 const FileImage: React.FC<ImageProps> = ({ src, ...props }) => {
   const img = useImageFileOrUrl(
@@ -50,7 +50,7 @@ const FileVideo: React.FC<
 };
 interface BatchTableProps {
   data: NFTInput[];
-  portalRef: React.RefObject<HTMLDivElement>;
+  portalRef: React.RefObject<HTMLDivElement | null>;
   nextTokenIdToMint?: bigint;
 }
 
@@ -115,11 +115,10 @@ export const BatchTable: React.FC<BatchTableProps> = ({
         // biome-ignore lint/suspicious/noExplicitAny: FIXME
         Cell: ({ cell }: { cell: any }) =>
           cell.value ? (
-            <CodeBlock
-              canCopy={false}
+            <CodeClient
               code={JSON.stringify(cell.value || {}, null, 2)}
-              language="json"
-              width={300}
+              lang="json"
+              scrollableClassName="max-w-[300px]"
             />
           ) : null,
       },
@@ -174,9 +173,9 @@ export const BatchTable: React.FC<BatchTableProps> = ({
                 {headerGroup.headers.map((column, i) => (
                   // biome-ignore lint/suspicious/noArrayIndexKey: FIXME
                   <Th {...column.getHeaderProps()} border="none" key={i}>
-                    <Text as="label" size="label.sm" color="faded">
+                    <p className="text-muted-foreground">
                       {column.render("Header")}
-                    </Text>
+                    </p>
                   </Th>
                 ))}
               </Tr>
@@ -227,10 +226,10 @@ export const BatchTable: React.FC<BatchTableProps> = ({
               icon={<ChevronLeftIcon className="size-4" />}
               onClick={() => previousPage()}
             />
-            <Text whiteSpace="nowrap">
+            <p className="whitespace-nowrap">
               Page <strong>{pageIndex + 1}</strong> of{" "}
               <strong>{pageOptions.length}</strong>
-            </Text>
+            </p>
             <IconButton
               isDisabled={!canNextPage}
               aria-label="next page"

@@ -1,31 +1,16 @@
-"use client";
-import { Spinner } from "@/components/ui/Spinner/Spinner";
-import { useAllContractList } from "@3rdweb-sdk/react/hooks/useRegistry";
-import { useActiveAccount } from "thirdweb/react";
-import { DeployedContracts } from "../../../../../components/contract-components/tables/deployed-contracts";
-import { GetStartedWithContractsDeploy } from "./_components/GetStartedWithContractsDeploy";
+import { DeployedContractsPage } from "../../../../account/contracts/_components/DeployedContractsPage";
+import { getAuthTokenWalletAddress } from "../../../../api/lib/getAuthToken";
+import { loginRedirect } from "../../../../login/loginRedirect";
 
-export default function Page() {
-  const address = useActiveAccount()?.address;
-  const deployedContracts = useAllContractList(address);
-  const hasContracts =
-    deployedContracts.data && deployedContracts.data?.length > 0;
+export default async function Page(props: {
+  params: Promise<{ team_slug: string; project_slug: string }>;
+}) {
+  const accountAddress = await getAuthTokenWalletAddress();
 
-  if (deployedContracts.isPending) {
-    return (
-      <div className="flex min-h-[400px] items-center justify-center">
-        <Spinner className="size-10" />
-      </div>
-    );
+  if (!accountAddress) {
+    const { team_slug, project_slug } = await props.params;
+    loginRedirect(`/team/${team_slug}/${project_slug}/contracts`);
   }
 
-  return (
-    <div className="pt-10 pb-10">
-      {!hasContracts ? (
-        <GetStartedWithContractsDeploy />
-      ) : (
-        <DeployedContracts contractListQuery={deployedContracts} limit={50} />
-      )}
-    </div>
-  );
+  return <DeployedContractsPage address={accountAddress} />;
 }

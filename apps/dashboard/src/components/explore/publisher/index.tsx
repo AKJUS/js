@@ -1,49 +1,52 @@
-import { SkeletonContainer } from "@/components/ui/skeleton";
-import { useEns } from "components/contract-components/hooks";
-import { PublisherAvatar } from "components/contract-components/publisher/masked-avatar";
+"use client";
+
+import { Skeleton } from "@/components/ui/skeleton";
+import { useThirdwebClient } from "@/constants/thirdweb.client";
+import { replaceDeployerAddress } from "lib/publisher-utils";
 import Link from "next/link";
-import type { RequiredParam } from "utils/types";
+import {
+  AccountAddress,
+  AccountAvatar,
+  AccountBlobbie,
+  AccountName,
+  AccountProvider,
+} from "thirdweb/react";
 import { shortenIfAddress } from "utils/usedapp-external";
 
 interface ContractPublisherProps {
-  addressOrEns: RequiredParam<string>;
-  showSkeleton?: boolean;
+  addressOrEns: string;
 }
 
 export const ContractPublisher: React.FC<ContractPublisherProps> = ({
   addressOrEns,
-  showSkeleton,
 }) => {
-  const ensQuery = useEns(addressOrEns || undefined);
-
+  const client = useThirdwebClient();
   return (
-    <Link
-      className="flex shrink-0 items-center gap-1.5 hover:underline"
-      href={replaceDeployerAddress(
-        `/${ensQuery.data?.ensName || ensQuery.data?.address || addressOrEns}`,
-      )}
-    >
-      <PublisherAvatar
-        isPending={showSkeleton}
-        boxSize={5}
-        address={addressOrEns || ""}
-      />
+    <AccountProvider address={addressOrEns} client={client}>
+      <Link
+        className="flex shrink-0 items-center gap-1.5 hover:underline"
+        href={replaceDeployerAddress(`/${addressOrEns}`)}
+      >
+        <AccountAvatar
+          fallbackComponent={<AccountBlobbie className="size-5 rounded-full" />}
+          loadingComponent={<Skeleton className="size-5 rounded-full" />}
+          className="size-5 rounded-full object-cover"
+        />
 
-      <SkeletonContainer
-        loadedData={
-          ensQuery.data?.ensName || ensQuery.data?.address || addressOrEns || ""
-        }
-        skeletonData=""
-        render={(v) => <p className="text-xs"> {treatAddress(v)} </p>}
-      />
-    </Link>
+        <AccountName
+          className="text-xs"
+          fallbackComponent={
+            <AccountAddress
+              className="text-xs"
+              formatFn={(addr) =>
+                shortenIfAddress(replaceDeployerAddress(addr))
+              }
+            />
+          }
+          loadingComponent={<Skeleton className="h-4 w-40" />}
+          formatFn={(name) => replaceDeployerAddress(name)}
+        />
+      </Link>
+    </AccountProvider>
   );
 };
-
-export function replaceDeployerAddress(address: string) {
-  return address.replace("deployer.thirdweb.eth", "thirdweb.eth");
-}
-
-export function treatAddress(address: string) {
-  return shortenIfAddress(replaceDeployerAddress(address));
-}

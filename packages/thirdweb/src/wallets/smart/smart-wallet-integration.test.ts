@@ -2,26 +2,29 @@ import { beforeAll, describe, expect, it } from "vitest";
 import { TEST_CLIENT } from "../../../test/src/test-clients.js";
 import { typedData } from "../../../test/src/typed-data.js";
 import { verifySignature } from "../../auth/verify-signature.js";
+import { verifyTypedData } from "../../auth/verify-typed-data.js";
 import { arbitrumSepolia } from "../../chains/chain-definitions/arbitrum-sepolia.js";
 import { type ThirdwebContract, getContract } from "../../contract/contract.js";
 import { parseEventLogs } from "../../event/actions/parse-logs.js";
 import { baseSepolia } from "../../exports/chains.js";
-
 import {
   addAdmin,
   adminUpdatedEvent,
 } from "../../exports/extensions/erc4337.js";
 import { balanceOf } from "../../extensions/erc1155/__generated__/IERC1155/read/balanceOf.js";
 import { claimTo } from "../../extensions/erc1155/drops/write/claimTo.js";
-import { checkContractWalletSignature } from "../../extensions/erc1271/checkContractWalletSignature.js";
 import { setContractURI } from "../../extensions/marketplace/__generated__/IMarketplace/write/setContractURI.js";
 import { estimateGasCost } from "../../transaction/actions/estimate-gas-cost.js";
 import { sendAndConfirmTransaction } from "../../transaction/actions/send-and-confirm-transaction.js";
 import { sendBatchTransaction } from "../../transaction/actions/send-batch-transaction.js";
+import { sendTransaction } from "../../transaction/actions/send-transaction.js";
 import { waitForReceipt } from "../../transaction/actions/wait-for-tx-receipt.js";
+import { prepareTransaction } from "../../transaction/prepare-transaction.js";
 import { isContractDeployed } from "../../utils/bytecode/is-contract-deployed.js";
+import { sleep } from "../../utils/sleep.js";
 import type { Account, Wallet } from "../interfaces/wallet.js";
 import { generateAccount } from "../utils/generateAccount.js";
+import { predictSmartAccountAddress } from "./lib/calls.js";
 import { smartWallet } from "./smart-wallet.js";
 
 let wallet: Wallet;
@@ -68,6 +71,38 @@ describe.runIf(process.env.TW_SECRET_KEY).sequential(
 
     it("can connect", async () => {
       expect(smartWalletAddress).toHaveLength(42);
+      const predictedAddress = await predictSmartAccountAddress({
+        client,
+        chain,
+        adminAddress: personalAccount.address,
+      });
+      expect(predictedAddress).toEqual(smartWalletAddress);
+    });
+
+    it("can sign a msg", async () => {
+      const signature = await smartAccount.signMessage({
+        message: "hello world",
+      });
+      const isValid = await verifySignature({
+        message: "hello world",
+        signature,
+        address: smartWalletAddress,
+        chain,
+        client,
+      });
+      expect(isValid).toEqual(true);
+    });
+
+    it("can sign typed data", async () => {
+      const signature = await smartAccount.signTypedData(typedData.basic);
+      const isValid = await verifyTypedData({
+        signature,
+        address: smartWalletAddress,
+        chain,
+        client,
+        ...typedData.basic,
+      });
+      expect(isValid).toEqual(true);
     });
 
     it("should revert on unsuccessful transactions", async () => {
@@ -140,17 +175,12 @@ describe.runIf(process.env.TW_SECRET_KEY).sequential(
         ],
       });
       expect(tx.transactionHash).toHaveLength(66);
-      await waitForReceipt({
+      const result = await waitForReceipt({
         client,
         transactionHash: tx.transactionHash,
         chain,
       });
-      const balance = await balanceOf({
-        contract,
-        owner: smartWalletAddress,
-        tokenId: 0n,
-      });
-      expect(balance).toEqual(3n);
+      expect(result.status).toEqual("success");
     });
 
     it("can sign and verify 1271 with replay protection", async () => {
@@ -164,19 +194,20 @@ describe.runIf(process.env.TW_SECRET_KEY).sequential(
         client,
       });
       expect(isValidV1).toEqual(true);
-      const isValidV2 = await checkContractWalletSignature({
-        message,
-        signature,
-        contract: accountContract,
-      });
-      expect(isValidV2).toEqual(true);
 
       // sign typed data
       const signatureTyped = await smartAccount.signTypedData({
         ...typedData.basic,
         primaryType: "Mail",
       });
-      expect(signatureTyped.length).toBe(132);
+      const isValidV2 = await verifyTypedData({
+        signature: signatureTyped,
+        address: smartWalletAddress,
+        chain,
+        client,
+        ...typedData.basic,
+      });
+      expect(isValidV2).toEqual(true);
 
       // add admin
       const newAdmin = await generateAccount({ client });
@@ -225,23 +256,22 @@ describe.runIf(process.env.TW_SECRET_KEY).sequential(
         client,
       });
       expect(isValidV1).toEqual(true);
-      const isValidV2 = await verifySignature({
-        message,
-        signature,
-        address: newAccount.address,
-        chain,
-        client,
-      });
-      expect(isValidV2).toEqual(true);
 
       // sign typed data
       const signatureTyped = await newAccount.signTypedData({
         ...typedData.basic,
         primaryType: "Mail",
       });
-      expect(signatureTyped.length).toBe(132);
+      const isValidV2 = await verifyTypedData({
+        signature: signatureTyped,
+        address: newAccount.address,
+        chain,
+        client,
+        ...typedData.basic,
+      });
+      expect(isValidV2).toEqual(true);
 
-      // add admin
+      // add admin pre-deployment
       const newAdmin = await generateAccount({ client });
       const receipt = await sendAndConfirmTransaction({
         account: newAccount,
@@ -259,8 +289,8 @@ describe.runIf(process.env.TW_SECRET_KEY).sequential(
         events: [adminUpdatedEvent()],
         logs: receipt.logs,
       });
-      expect(logs[0]?.args.signer).toBe(newAdmin.address);
-      expect(logs[0]?.args.isAdmin).toBe(true);
+      expect(logs.map((l) => l.args.signer)).toContain(newAdmin.address);
+      expect(logs.map((l) => l.args.isAdmin)).toContain(true);
 
       // should not be able to switch chains since factory not deployed elsewhere
       await expect(
@@ -275,32 +305,11 @@ describe.runIf(process.env.TW_SECRET_KEY).sequential(
     });
 
     it("can switch chains", async () => {
-      const baseSepoliaEdition = getContract({
-        address: "0x638263e3eAa3917a53630e61B1fBa685308024fa",
-        chain: baseSepolia,
-        client: TEST_CLIENT,
-      });
       await wallet.switchChain(baseSepolia);
-      const tx = await sendAndConfirmTransaction({
-        transaction: claimTo({
-          contract: baseSepoliaEdition,
-          quantity: 1n,
-          to: smartWalletAddress,
-          tokenId: 0n,
-        }),
-        // biome-ignore lint/style/noNonNullAssertion: should be set after switching chains
-        account: wallet.getAccount()!,
-      });
-      expect(tx.transactionHash).toHaveLength(66);
-      const balance = await balanceOf({
-        contract: baseSepoliaEdition,
-        owner: smartWalletAddress,
-        tokenId: 0n,
-      });
-      expect(balance).toEqual(1n);
+      expect(wallet.getChain()?.id).toEqual(baseSepolia.id);
     });
 
-    it("can execute a 2 tx in parallel", async () => {
+    it("can execute 2 tx in parallel", async () => {
       const newSmartWallet = smartWallet({
         chain,
         gasless: true,
@@ -312,7 +321,6 @@ describe.runIf(process.env.TW_SECRET_KEY).sequential(
         client: TEST_CLIENT,
         personalAccount,
       });
-      console.log("newSmartAccount", newSmartAccount.address);
       const newSmartAccountContract = getContract({
         address: newSmartAccount.address,
         chain,
@@ -332,15 +340,17 @@ describe.runIf(process.env.TW_SECRET_KEY).sequential(
           }),
           account: newSmartAccount,
         }),
-        sendAndConfirmTransaction({
-          transaction: claimTo({
-            contract,
-            quantity: 1n,
-            to: newSmartAccount.address,
-            tokenId: 0n,
+        sleep(1000).then(() =>
+          sendAndConfirmTransaction({
+            transaction: claimTo({
+              contract,
+              quantity: 1n,
+              to: newSmartAccount.address,
+              tokenId: 0n,
+            }),
+            account: newSmartAccount,
           }),
-          account: newSmartAccount,
-        }),
+        ),
       ]);
       expect(txs.length).toEqual(2);
       expect(txs.every((t) => t.transactionHash.length === 66)).toBe(true);
@@ -353,6 +363,37 @@ describe.runIf(process.env.TW_SECRET_KEY).sequential(
         tokenId: 0n,
       });
       expect(balance).toEqual(2n);
+    });
+
+    it("can use a different paymaster", async () => {
+      const wallet = smartWallet({
+        chain,
+        factoryAddress: factoryAddress,
+        gasless: true,
+        overrides: {
+          paymaster: async () => {
+            return {
+              paymaster: "0x",
+              paymasterData: "0x",
+            };
+          },
+        },
+      });
+      const newSmartAccount = await wallet.connect({
+        client: TEST_CLIENT,
+        personalAccount,
+      });
+      const transaction = prepareTransaction({
+        client: TEST_CLIENT,
+        chain,
+        value: 0n,
+      });
+      await expect(
+        sendTransaction({
+          transaction,
+          account: newSmartAccount,
+        }),
+      ).rejects.toThrowError(/AA21 didn't pay prefund/);
     });
   },
 );

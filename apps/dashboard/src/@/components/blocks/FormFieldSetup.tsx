@@ -3,15 +3,17 @@ import { ToolTipLabel } from "@/components/ui/tooltip";
 import { AsteriskIcon, InfoIcon } from "lucide-react";
 
 export function FormFieldSetup(props: {
-  htmlFor: string;
+  htmlFor?: string;
   label: string;
   errorMessage: React.ReactNode | undefined;
   children: React.ReactNode;
   tooltip?: React.ReactNode;
   isRequired: boolean;
+  helperText?: React.ReactNode;
+  className?: string;
 }) {
   return (
-    <div>
+    <div className={props.className}>
       <div className="mb-2 inline-flex items-center gap-1">
         <Label htmlFor={props.htmlFor}>{props.label}</Label>
 
@@ -26,8 +28,13 @@ export function FormFieldSetup(props: {
         )}
       </div>
       {props.children}
+
+      {props.helperText && (
+        <p className="mt-2 text-muted-foreground text-sm">{props.helperText}</p>
+      )}
+
       {props.errorMessage && (
-        <p className="mt-1 text-destructive-text text-sm">
+        <p className="mt-2 text-destructive-text text-sm">
           {props.errorMessage}
         </p>
       )}

@@ -1,5 +1,5 @@
-import type { WalletStats } from "@3rdweb-sdk/react/hooks/useApi";
 import type { WalletId } from "thirdweb/wallets";
+import type { WalletStats } from "types/analytics";
 
 const walletsToPickFrom: WalletId[] = [
   "io.metamask",
@@ -24,9 +24,10 @@ const walletsToPickFrom: WalletId[] = [
 ];
 
 const pickRandomWallet = () => {
-  return walletsToPickFrom[
-    Math.floor(Math.random() * walletsToPickFrom.length)
-  ];
+  return (
+    walletsToPickFrom[Math.floor(Math.random() * walletsToPickFrom.length)] ||
+    "io.metamask"
+  );
 };
 
 export function createWalletStatsStub(days: number): WalletStats[] {

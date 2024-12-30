@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { getThirdwebClient } from "@/constants/thirdweb.server";
 import type { Meta, StoryObj } from "@storybook/react";
 import { ThirdwebProvider } from "thirdweb/react";
 import { teamsAndProjectsStub } from "../../../../stories/stubs";
@@ -6,7 +7,7 @@ import { BadgeContainer, mobileViewport } from "../../../../stories/utils";
 import { TeamHeaderDesktopUI, TeamHeaderMobileUI } from "./TeamHeaderUI";
 
 const meta = {
-  title: "Team/Team selector",
+  title: "Headers/TeamHeader/LoggedIn",
   component: Variants,
   parameters: {
     nextjs: {
@@ -33,19 +34,29 @@ export const Mobile: Story = {
   },
 };
 
+const client = getThirdwebClient();
+
 function Variants(props: {
   type: "mobile" | "desktop";
 }) {
   const Comp =
     props.type === "mobile" ? TeamHeaderMobileUI : TeamHeaderDesktopUI;
 
+  const team1 = teamsAndProjectsStub[0]?.team;
+  const team2 = teamsAndProjectsStub[1]?.team;
+  const team3 = teamsAndProjectsStub[2]?.team;
+  const team3Project = teamsAndProjectsStub[2]?.projects[0];
+
+  if (!team1 || !team2 || !team3 || !team3Project) {
+    return <div> failed to get team and project stubs </div>;
+  }
   return (
     <ThirdwebProvider>
       <div className="flex min-h-screen flex-col gap-6 bg-gray-700 px-4 py-10">
         <BadgeContainer label="Team Free, Account Loaded">
           <Comp
             teamsAndProjects={teamsAndProjectsStub}
-            currentTeam={teamsAndProjectsStub[0].team}
+            currentTeam={team1}
             currentProject={undefined}
             logout={() => {}}
             connectButton={<ConnectButtonStub />}
@@ -54,25 +65,27 @@ function Variants(props: {
               email: "foo@example.com",
               id: "1",
             }}
+            client={client}
           />
         </BadgeContainer>
 
         <BadgeContainer label="Team Growth, Account Loading">
           <Comp
             teamsAndProjects={teamsAndProjectsStub}
-            currentTeam={teamsAndProjectsStub[1].team}
+            currentTeam={team2}
             currentProject={undefined}
             account={undefined}
             logout={() => {}}
             connectButton={<ConnectButtonStub />}
             createProject={() => {}}
+            client={client}
           />
         </BadgeContainer>
 
         <BadgeContainer label="Team, Pro">
           <Comp
             teamsAndProjects={teamsAndProjectsStub}
-            currentTeam={teamsAndProjectsStub[2].team}
+            currentTeam={team3}
             currentProject={undefined}
             account={{
               email: "foo@example.com",
@@ -81,14 +94,15 @@ function Variants(props: {
             logout={() => {}}
             connectButton={<ConnectButtonStub />}
             createProject={() => {}}
+            client={client}
           />
         </BadgeContainer>
 
         <BadgeContainer label="Team + Project, Pro">
           <Comp
             teamsAndProjects={teamsAndProjectsStub}
-            currentTeam={teamsAndProjectsStub[2].team}
-            currentProject={teamsAndProjectsStub[2].projects[0]}
+            currentTeam={team3}
+            currentProject={team3Project}
             account={{
               email: "foo@example.com",
               id: "foo",
@@ -96,6 +110,7 @@ function Variants(props: {
             logout={() => {}}
             connectButton={<ConnectButtonStub />}
             createProject={() => {}}
+            client={client}
           />
         </BadgeContainer>
       </div>

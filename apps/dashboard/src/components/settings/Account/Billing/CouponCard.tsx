@@ -2,6 +2,7 @@
 
 import { DangerSettingCard } from "@/components/blocks/DangerSettingCard";
 import { SettingsCard } from "@/components/blocks/SettingsCard";
+import { Spinner } from "@/components/ui/Spinner/Spinner";
 import {
   Form,
   FormControl,
@@ -10,17 +11,28 @@ import {
   FormLabel,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { useLoggedInUser } from "@3rdweb-sdk/react/hooks/useLoggedInUser";
-import { Spinner } from "@chakra-ui/react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { format, fromUnixTime } from "date-fns";
 import { TagIcon } from "lucide-react";
+import dynamic from "next/dynamic";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
+import { useActiveAccount } from "thirdweb/react";
 import { z } from "zod";
+
+const LazyShareFreeWalletsModal = dynamic(
+  () =>
+    import("./share-free-wallets-modal.client").then((mod) => ({
+      default: mod.ShareFreeWalletsModal,
+    })),
+  {
+    ssr: false,
+    loading: () => null,
+  },
+);
 
 export type ActiveCouponResponse = {
   id: string;
@@ -36,7 +48,11 @@ export type ActiveCouponResponse = {
 
 function ApplyCouponCard(props: {
   teamId: string | undefined;
-  onCouponApplied: (data: ActiveCouponResponse) => void;
+  onCouponApplied: (
+    data: ActiveCouponResponse,
+    isFreeWalletsCoupon: boolean,
+  ) => void;
+  isPaymentSetup: boolean;
 }) {
   const searchParams = useSearchParams();
   const couponCode = searchParams?.get("coupon");
@@ -45,6 +61,7 @@ function ApplyCouponCard(props: {
       onCouponApplied={props.onCouponApplied}
       prefillPromoCode={couponCode || undefined}
       scrollIntoView={!!couponCode}
+      isPaymentSetup={props.isPaymentSetup}
       submit={async (promoCode: string) => {
         const res = await fetch("/api/server-proxy/api/v1/coupons/redeem", {
           method: "POST",
@@ -83,9 +100,12 @@ export function ApplyCouponCardUI(props: {
     status: number;
     data: null | ActiveCouponResponse;
   }>;
-  onCouponApplied: ((data: ActiveCouponResponse) => void) | undefined;
+  onCouponApplied:
+    | ((data: ActiveCouponResponse, isFreeWalletsCoupon: boolean) => void)
+    | undefined;
   prefillPromoCode?: string;
   scrollIntoView?: boolean;
+  isPaymentSetup: boolean;
 }) {
   const containerRef = useRef<HTMLFormElement | null>(null);
   const form = useForm<z.infer<typeof couponFormSchema>>({
@@ -113,13 +133,24 @@ export function ApplyCouponCardUI(props: {
   });
 
   async function onSubmit(values: z.infer<typeof couponFormSchema>) {
+    if (!props.isPaymentSetup) {
+      return;
+    }
+
     try {
       const res = await applyCoupon.mutateAsync(values.promoCode);
       switch (res.status) {
         case 200: {
           toast.success("Coupon applied successfully");
           if (res.data) {
-            props.onCouponApplied?.(res.data);
+            props.onCouponApplied?.(
+              res.data,
+              // prod & dev
+              values.promoCode === "FREEWALLETS" ||
+                // new prod code
+                values.promoCode === "FREEWALLETS24" ||
+                values.promoCode === "TESTFREEWALLETS",
+            );
           }
           break;
         }
@@ -161,10 +192,14 @@ export function ApplyCouponCardUI(props: {
             description:
               "Enter your coupon code to apply discounts or free trials on thirdweb products",
           }}
-          bottomText=""
+          bottomText={
+            props.isPaymentSetup
+              ? ""
+              : "A valid payment method must be added to apply a coupon."
+          }
           saveButton={{
             variant: "default",
-            disabled: false,
+            disabled: !props.isPaymentSetup,
             isPending: applyCoupon.isPending,
             label: "Apply Coupon",
             type: "submit",
@@ -181,7 +216,11 @@ export function ApplyCouponCardUI(props: {
               <FormItem>
                 <FormLabel>Coupon Code</FormLabel>
                 <FormControl>
-                  <Input {...field} className="lg:max-w-[450px]" />
+                  <Input
+                    {...field}
+                    className="lg:max-w-[450px]"
+                    disabled={!props.isPaymentSetup}
+                  />
                 </FormControl>
               </FormItem>
             )}
@@ -238,8 +277,12 @@ export function CouponDetailsCardUI(props: {
   );
 }
 
-export function CouponSection(props: { teamId: string | undefined }) {
-  const loggedInUser = useLoggedInUser();
+export function CouponSection(props: {
+  teamId: string | undefined;
+  isPaymentSetup: boolean;
+}) {
+  const address = useActiveAccount()?.address;
+  const [showShareModal, setShowShareModal] = useState(false);
   const [optimisticCouponData, setOptimisticCouponData] = useState<
     | {
         type: "added";
@@ -252,7 +295,7 @@ export function CouponSection(props: { teamId: string | undefined }) {
   >();
 
   const activeCoupon = useQuery({
-    queryKey: ["active-coupon", loggedInUser.user?.address, props.teamId],
+    queryKey: ["active-coupon", address, props.teamId],
     queryFn: async () => {
       const res = await fetch(
         `/api/server-proxy/api/v1/active-coupon${
@@ -300,33 +343,45 @@ export function CouponSection(props: { teamId: string | undefined }) {
     ? optimisticCouponData.data
     : activeCoupon.data;
 
-  if (couponData) {
-    return (
-      <CouponDetailsCardUI
-        activeCoupon={couponData}
-        deleteCoupon={{
-          mutateAsync: deleteActiveCoupon.mutateAsync,
-          isPending: deleteActiveCoupon.isPending,
-        }}
-      />
-    );
-  }
-
   return (
-    <Suspense fallback={<LoadingCouponSection />}>
-      <ApplyCouponCard
-        teamId={props.teamId}
-        onCouponApplied={(coupon) => {
-          setOptimisticCouponData({
-            type: "added",
-            data: coupon,
-          });
-          activeCoupon.refetch().then(() => {
-            setOptimisticCouponData(undefined);
-          });
-        }}
-      />
-    </Suspense>
+    <>
+      {couponData ? (
+        <CouponDetailsCardUI
+          activeCoupon={couponData}
+          deleteCoupon={{
+            mutateAsync: deleteActiveCoupon.mutateAsync,
+            isPending: deleteActiveCoupon.isPending,
+          }}
+        />
+      ) : (
+        <Suspense fallback={<LoadingCouponSection />}>
+          <ApplyCouponCard
+            teamId={props.teamId}
+            onCouponApplied={(coupon, isFreeWalletsCoupon) => {
+              setOptimisticCouponData({
+                type: "added",
+                data: coupon,
+              });
+
+              if (isFreeWalletsCoupon) {
+                setShowShareModal(true);
+              }
+              activeCoupon.refetch().then(() => {
+                setOptimisticCouponData(undefined);
+              });
+            }}
+            isPaymentSetup={props.isPaymentSetup}
+          />
+        </Suspense>
+      )}
+
+      {showShareModal && (
+        <LazyShareFreeWalletsModal
+          isOpen={showShareModal}
+          onOpenChange={setShowShareModal}
+        />
+      )}
+    </>
   );
 }
 

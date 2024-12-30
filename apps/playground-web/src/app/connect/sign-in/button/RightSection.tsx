@@ -41,7 +41,11 @@ export function RightSection(props: {
   // fake login for playground
   const playgroundAuth: ConnectButtonProps["auth"] = {
     async doLogin() {
-      localStorage.setItem("playground-loggedin", "true");
+      try {
+        localStorage.setItem("playground-loggedin", "true");
+      } catch {
+        // ignore
+      }
     },
     async doLogout() {
       localStorage.removeItem("playground-loggedin");
@@ -59,7 +63,11 @@ export function RightSection(props: {
       };
     },
     async isLoggedIn() {
-      return !!localStorage.getItem("playground-loggedin");
+      try {
+        return !!localStorage.getItem("playground-loggedin");
+      } catch {
+        return false;
+      }
     },
   };
 
@@ -81,6 +89,37 @@ export function RightSection(props: {
       doLogout();
     }
   }, [connectOptions.enableAuth, doLogout]);
+
+  const connectButton = (
+    <ConnectButton
+      client={THIRDWEB_CLIENT}
+      autoConnect={false}
+      theme={themeObj}
+      locale={connectOptions.localeId}
+      connectButton={{
+        label: connectOptions.buttonLabel,
+      }}
+      connectModal={{
+        size: connectOptions.modalSize,
+        title: connectOptions.modalTitle,
+        titleIcon: connectOptions.modalTitleIcon,
+        termsOfServiceUrl: connectOptions.termsOfServiceLink,
+        privacyPolicyUrl: connectOptions.privacyPolicyLink,
+        showThirdwebBranding: connectOptions.ShowThirdwebBranding,
+        requireApproval: connectOptions.requireApproval,
+      }}
+      wallets={wallets}
+      auth={connectOptions.enableAuth ? playgroundAuth : undefined}
+      accountAbstraction={
+        connectOptions.enableAccountAbstraction
+          ? {
+              chain: ethereum,
+              sponsorGas: true,
+            }
+          : undefined
+      }
+    />
+  );
 
   return (
     <div className="flex shrink-0 flex-col gap-4 xl:sticky xl:top-0 xl:max-h-[100vh] xl:w-[764px]">
@@ -115,7 +154,8 @@ export function RightSection(props: {
 
         {previewTab === "modal" &&
           (account && (!connectOptions.enableAuth || isLoggedIn) ? (
-            <ConnectButton client={THIRDWEB_CLIENT} />
+            // TODO: should show the expanded connected modal here instead
+            connectButton
           ) : (
             <div className="relative">
               <ConnectEmbed
@@ -154,36 +194,7 @@ export function RightSection(props: {
             </div>
           ))}
 
-        {previewTab === "button" && (
-          <ConnectButton
-            client={THIRDWEB_CLIENT}
-            autoConnect={false}
-            theme={themeObj}
-            locale={connectOptions.localeId}
-            connectButton={{
-              label: connectOptions.buttonLabel,
-            }}
-            connectModal={{
-              size: connectOptions.modalSize,
-              title: connectOptions.modalTitle,
-              titleIcon: connectOptions.modalTitleIcon,
-              termsOfServiceUrl: connectOptions.termsOfServiceLink,
-              privacyPolicyUrl: connectOptions.privacyPolicyLink,
-              showThirdwebBranding: connectOptions.ShowThirdwebBranding,
-              requireApproval: connectOptions.requireApproval,
-            }}
-            wallets={wallets}
-            auth={connectOptions.enableAuth ? playgroundAuth : undefined}
-            accountAbstraction={
-              connectOptions.enableAccountAbstraction
-                ? {
-                    chain: ethereum,
-                    sponsorGas: true,
-                  }
-                : undefined
-            }
-          />
-        )}
+        {previewTab === "button" && connectButton}
 
         {previewTab === "code" && <CodeGen connectOptions={connectOptions} />}
       </div>

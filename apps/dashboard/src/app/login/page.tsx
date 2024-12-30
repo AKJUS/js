@@ -1,122 +1,25 @@
-"use client";
+import { getRawAccount } from "../account/settings/getAccount";
+import { LoginAndOnboardingPage } from "./LoginPage";
+import { isValidEncodedRedirectPath } from "./isValidEncodedRedirectPath";
 
-import { ColorModeToggle } from "@/components/color-mode-toggle";
-import { useThirdwebClient } from "@/constants/thirdweb.client";
-import { useDashboardRouter } from "@/lib/DashboardRouter";
-import { useTheme } from "next-themes";
-import { useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useState } from "react";
-import { ConnectEmbed } from "thirdweb/react";
-import { getCookie } from "../../stores/SyncStoreToCookies";
-import { ThirdwebMiniLogo } from "../components/ThirdwebMiniLogo";
-import { getSDKTheme } from "../components/sdk-component-theme";
-import { doLogin, doLogout, getLoginPayload, isLoggedIn } from "./auth-actions";
+export default async function Page(props: {
+  searchParams: Promise<{
+    next?: string;
+  }>;
+}) {
+  const nextPath = (await props.searchParams).next;
+  const account = await getRawAccount();
 
-export default function LoginPage() {
-  return (
-    <div className="relative grid h-screen place-items-center bg-muted/30">
-      <nav className="absolute top-0 z-20 flex w-full flex-row items-center justify-between px-6 py-4">
-        <ThirdwebMiniLogo className="max-h-7" />
-        <ColorModeToggle />
-      </nav>
-      <main className="z-10 flex flex-col gap-6">
-        <h1 className="text-center font-semibold text-2xl tracking-tight lg:text-3xl">
-          Get started with thirdweb
-        </h1>
-        <Suspense>
-          <CustomConnectEmmbed />
-        </Suspense>
-      </main>
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        alt=""
-        src="/assets/login/background.svg"
-        className="-bottom-12 -right-12 fixed lg:right-0 lg:bottom-0"
-      />
-    </div>
-  );
-}
+  // don't redirect away from login page if authToken is already present and onboarding is done
+  // so that if user is stuck in a state where cookie is set, account onboarding is complete but the wallet is not connected, they can connect wallet, sign in and continue
 
-function CustomConnectEmmbed() {
-  const isLG = useMediaQuery("(min-width: 1024px)");
-  const searchParams = useSearchParams();
-  const router = useDashboardRouter();
-  const { theme } = useTheme();
-  const nextSearchParam = searchParams?.get("next");
-  const client = useThirdwebClient();
+  // if the user is already logged in, wallet is connected and onboarding is complete
+  // user will be redirected to the next path on the client side without having to do anything
 
-  function onLoginSuccessful() {
-    if (nextSearchParam && isValidRedirectPath(nextSearchParam)) {
-      router.replace(nextSearchParam);
-    } else {
-      const dashboardType = getCookie("x-dashboard-type");
-      if (dashboardType === "team") {
-        router.replace("/team");
-      } else {
-        router.replace("/dashboard");
-      }
-    }
-  }
+  const redirectPath =
+    nextPath && isValidEncodedRedirectPath(nextPath) ? nextPath : "/team";
 
   return (
-    <ConnectEmbed
-      auth={{
-        getLoginPayload,
-        doLogin: async (params) => {
-          try {
-            await doLogin(params);
-            onLoginSuccessful();
-          } catch (e) {
-            console.error("Failed to login", e);
-            throw e;
-          }
-        },
-        doLogout,
-        isLoggedIn: async (x) => {
-          const isLoggedInResult = await isLoggedIn(x);
-          if (isLoggedInResult) {
-            onLoginSuccessful();
-          }
-          return isLoggedInResult;
-        },
-      }}
-      client={client}
-      modalSize={isLG ? "wide" : "compact"}
-      theme={getSDKTheme(theme === "light" ? "light" : "dark")}
-      className="shadow-lg"
-      privacyPolicyUrl="/privacy"
-      termsOfServiceUrl="/tos"
-    />
+    <LoginAndOnboardingPage account={account} redirectPath={redirectPath} />
   );
-}
-
-function isValidRedirectPath(encodedPath: string): boolean {
-  try {
-    // Decode the URI component
-    const decodedPath = decodeURIComponent(encodedPath);
-    // ensure the path always starts with a _single_ slash
-    // dobule slash could be interpreted as `//example.com` which is not allowed
-    return decodedPath.startsWith("/") && !decodedPath.startsWith("//");
-  } catch {
-    // If decoding fails, return false
-    return false;
-  }
-}
-
-function useMediaQuery(query: string) {
-  const [matches, setMatches] = useState(() => {
-    if (typeof window === "undefined") return false;
-    return window.matchMedia(query).matches;
-  });
-
-  // required here
-  // eslint-disable-next-line no-restricted-syntax
-  useEffect(() => {
-    const mediaQuery = window.matchMedia(query);
-    const handler = (event: MediaQueryListEvent) => setMatches(event.matches);
-    mediaQuery.addEventListener("change", handler);
-    return () => mediaQuery.removeEventListener("change", handler);
-  }, [query]);
-
-  return matches;
 }

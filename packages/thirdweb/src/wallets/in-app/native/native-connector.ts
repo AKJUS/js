@@ -2,6 +2,7 @@ import type { ThirdwebClient } from "../../../client/client.js";
 import { stringify } from "../../../utils/json.js";
 import { nativeLocalStorage } from "../../../utils/storage/nativeStorage.js";
 import type { Account } from "../../interfaces/wallet.js";
+import { getUserStatus } from "../core/actions/get-enclave-user-status.js";
 import { authEndpoint } from "../core/authentication/authEndpoint.js";
 import { ClientScopedStorage } from "../core/authentication/client-scoped-storage.js";
 import { guestAuthenticate } from "../core/authentication/guest.js";
@@ -9,6 +10,7 @@ import { customJwt } from "../core/authentication/jwt.js";
 import {
   getLinkedProfilesInternal,
   linkAccount,
+  unlinkAccount,
 } from "../core/authentication/linkAccount.js";
 import {
   loginWithPasskey,
@@ -23,13 +25,13 @@ import type {
   LogoutReturnType,
   MultiStepAuthArgsType,
   MultiStepAuthProviderType,
+  Profile,
   SingleStepAuthArgsType,
 } from "../core/authentication/types.js";
 import type { InAppConnector } from "../core/interfaces/connector.js";
 import { EnclaveWallet } from "../core/wallet/enclave-wallet.js";
 import type { Ecosystem } from "../core/wallet/types.js";
 import type { IWebWallet } from "../core/wallet/web-wallet.js";
-import { getUserStatus } from "../web/lib/actions/get-enclave-user-status.js";
 import { sendOtp, verifyOtp } from "../web/lib/auth/otp.js";
 import { deleteActiveAccount, socialAuth } from "./auth/native-auth.js";
 import { logoutUser } from "./helpers/auth/logout.js";
@@ -44,60 +46,94 @@ type NativeConnectorOptions = {
 export class InAppNativeConnector implements InAppConnector {
   private client: ThirdwebClient;
   private ecosystem?: Ecosystem;
+  private storage: ClientScopedStorage;
   private passkeyDomain?: string;
-  private localStorage: ClientScopedStorage;
   private wallet?: IWebWallet;
 
   constructor(options: NativeConnectorOptions) {
     this.client = options.client;
-    this.ecosystem = options.ecosystem;
     this.passkeyDomain = options.passkeyDomain;
-    this.localStorage = new ClientScopedStorage({
+    this.ecosystem = options.ecosystem;
+    this.storage = new ClientScopedStorage({
       storage: nativeLocalStorage,
       clientId: this.client.clientId,
-      ecosystemId: this.ecosystem?.id,
+      ecosystem: options.ecosystem,
     });
   }
 
-  async initializeWallet(authToken?: string) {
-    const storedAuthToken = await this.localStorage.getAuthCookie();
-    if (!authToken && storedAuthToken === null) {
+  async initializeWallet(
+    authResult?: AuthStoredTokenWithCookieReturnType,
+    encryptionKey?: string,
+  ) {
+    const storedAuthToken = await this.storage.getAuthCookie();
+    if (!authResult && storedAuthToken === null) {
       throw new Error(
         "No auth token provided and no stored auth token found to initialize the wallet",
       );
     }
     const user = await getUserStatus({
-      authToken: authToken || (storedAuthToken as string),
+      authToken:
+        authResult?.storedToken.cookieString || (storedAuthToken as string),
       client: this.client,
-      ecosystem: this.ecosystem,
+      ecosystem: this.storage.ecosystem,
     });
     if (!user) {
       throw new Error("Cannot initialize wallet, no user logged in");
     }
-    const wallet = user.wallets[0];
-    // TODO (enclaves): Migration to enclave wallet if sharded
+    let wallet = user.wallets[0];
+
+    if (authResult && wallet && wallet.type === "sharded") {
+      try {
+        const { migrateToEnclaveWallet } = await import(
+          "./helpers/wallet/migration.js"
+        );
+        wallet = await migrateToEnclaveWallet({
+          client: this.client,
+          storage: this.storage,
+          storedToken: authResult.storedToken,
+          encryptionKey,
+        });
+      } catch {
+        console.warn(
+          "Failed to migrate from sharded to enclave wallet, continuing with sharded wallet",
+        );
+      }
+    }
+
+    if (authResult && !wallet) {
+      // new user, generate enclave wallet
+      const { generateWallet } = await import(
+        "../core/actions/generate-wallet.enclave.js"
+      );
+      wallet = await generateWallet({
+        authToken: authResult.storedToken.cookieString,
+        client: this.client,
+        ecosystem: this.ecosystem,
+      });
+    }
+
     if (wallet && wallet.type === "enclave") {
       this.wallet = new EnclaveWallet({
         client: this.client,
         ecosystem: this.ecosystem,
         address: wallet.address,
-        storage: this.localStorage,
+        storage: this.storage,
       });
     } else {
       this.wallet = new ShardedWallet({
         client: this.client,
-        storage: this.localStorage,
+        storage: this.storage,
       });
     }
   }
 
   async getUser(): Promise<GetUser> {
     if (!this.wallet) {
-      const localAuthToken = await this.localStorage.getAuthCookie();
+      const localAuthToken = await this.storage.getAuthCookie();
       if (!localAuthToken) {
         return { status: "Logged Out" };
       }
-      await this.initializeWallet(localAuthToken);
+      await this.initializeWallet();
     }
     if (!this.wallet) {
       throw new Error("Wallet not initialized");
@@ -164,13 +200,13 @@ export class InAppNativeConnector implements InAppConnector {
         return customJwt({
           jwt: params.jwt,
           client: this.client,
-          storage: this.localStorage,
+          ecosystem: this.ecosystem,
         });
       case "auth_endpoint":
         return authEndpoint({
           payload: params.payload,
           client: this.client,
-          storage: this.localStorage,
+          ecosystem: this.ecosystem,
         });
       default:
         throw new Error(`Unsupported authentication type: ${strategy}`);
@@ -185,17 +221,16 @@ export class InAppNativeConnector implements InAppConnector {
       client: this.client,
       ecosystem: this.ecosystem,
     });
-    await this.initializeWallet(authResult.storedToken.cookieString);
-    if (!this.wallet) {
-      throw new Error("Wallet not initialized");
-    }
     const encryptionKey =
       params.strategy === "jwt"
         ? params.encryptionKey
         : params.strategy === "auth_endpoint"
           ? params.encryptionKey
           : undefined;
-
+    await this.initializeWallet(authResult, encryptionKey);
+    if (!this.wallet) {
+      throw new Error("Wallet not initialized");
+    }
     await this.wallet.postWalletSetUp({
       ...authResult,
       encryptionKey,
@@ -226,7 +261,7 @@ export class InAppNativeConnector implements InAppConnector {
       storeLastUsedPasskey = true,
     } = args;
     const domain = this.passkeyDomain;
-    const storage = this.localStorage;
+    const storage = this.storage;
     if (!domain) {
       throw new Error(
         "Passkey domain is required for native platforms. Please pass it in the 'auth' options when creating the inAppWallet().",
@@ -278,14 +313,14 @@ export class InAppNativeConnector implements InAppConnector {
   async deleteActiveAccount() {
     return deleteActiveAccount({
       client: this.client,
-      storage: this.localStorage,
+      storage: this.storage,
     });
   }
 
   logout(): Promise<LogoutReturnType> {
     return logoutUser({
       client: this.client,
-      storage: this.localStorage,
+      storage: this.storage,
     });
   }
 
@@ -294,8 +329,17 @@ export class InAppNativeConnector implements InAppConnector {
     return await linkAccount({
       client: args.client,
       tokenToLink: storedToken.cookieString,
-      storage: this.localStorage,
+      storage: this.storage,
       ecosystem: args.ecosystem || this.ecosystem,
+    });
+  }
+
+  async unlinkProfile(profile: Profile) {
+    return await unlinkAccount({
+      client: this.client,
+      ecosystem: this.ecosystem,
+      storage: this.storage,
+      profileToUnlink: profile,
     });
   }
 
@@ -303,7 +347,7 @@ export class InAppNativeConnector implements InAppConnector {
     return getLinkedProfilesInternal({
       client: this.client,
       ecosystem: this.ecosystem,
-      storage: this.localStorage,
+      storage: this.storage,
     });
   }
 }

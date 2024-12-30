@@ -1,7 +1,8 @@
-import { type TransactionSerializable, decodeErrorResult } from "viem";
+import { decodeErrorResult } from "viem";
 import { parseEventLogs } from "../../../event/actions/parse-logs.js";
 import { userOperationRevertReasonEvent } from "../../../extensions/erc4337/__generated__/IEntryPoint/events/UserOperationRevertReason.js";
 import { postOpRevertReasonEvent } from "../../../extensions/erc4337/__generated__/IEntryPoint_v07/events/PostOpRevertReason.js";
+import type { SerializableTransaction } from "../../../transaction/serialize-transaction.js";
 import type { TransactionReceipt } from "../../../transaction/types.js";
 import { type Hex, hexToBigInt } from "../../../utils/encoding/hex.js";
 import { getClientFetch } from "../../../utils/fetch.js";
@@ -17,7 +18,6 @@ import {
   formatUserOperationReceipt,
 } from "../types.js";
 import {
-  DEBUG,
   ENTRYPOINT_ADDRESS_v0_6,
   MANAGED_ACCOUNT_GAS_BUFFER,
   getDefaultBundlerUrl,
@@ -68,23 +68,36 @@ export async function bundleUserOp(args: {
  * ```
  * @walletUtils
  */
-export async function estimateUserOpGas(args: {
-  userOp: UserOperationV06 | UserOperationV07;
-  options: BundlerOptions;
-}): Promise<EstimationResult> {
+export async function estimateUserOpGas(
+  args: {
+    userOp: UserOperationV06 | UserOperationV07;
+    options: BundlerOptions;
+  },
+  stateOverrides?: {
+    [x: string]: {
+      stateDiff: {
+        [x: string]: `0x${string}`;
+      };
+    };
+  },
+): Promise<EstimationResult> {
   const res = await sendBundlerRequest({
     ...args,
     operation: "eth_estimateUserOperationGas",
     params: [
       hexlifyUserOp(args.userOp),
       args.options.entrypointAddress ?? ENTRYPOINT_ADDRESS_v0_6,
+      stateOverrides ?? {},
     ],
   });
 
   // add gas buffer for managed account factory delegate calls
   return {
     preVerificationGas: hexToBigInt(res.preVerificationGas),
-    verificationGas: hexToBigInt(res.verificationGas),
+    verificationGas:
+      res.verificationGas !== undefined
+        ? hexToBigInt(res.verificationGas)
+        : undefined,
     verificationGasLimit: hexToBigInt(res.verificationGasLimit),
     callGasLimit: hexToBigInt(res.callGasLimit) + MANAGED_ACCOUNT_GAS_BUFFER,
     paymasterVerificationGasLimit:
@@ -215,7 +228,7 @@ export async function getUserOpReceiptRaw(
  */
 export async function getZkPaymasterData(args: {
   options: BundlerOptions;
-  transaction: TransactionSerializable;
+  transaction: SerializableTransaction;
 }): Promise<PmTransactionData> {
   const res = await sendBundlerRequest({
     options: args.options,
@@ -231,7 +244,7 @@ export async function getZkPaymasterData(args: {
 
 export async function broadcastZkTransaction(args: {
   options: BundlerOptions;
-  transaction: TransactionSerializable;
+  transaction: SerializableTransaction;
   signedTransaction: Hex;
 }): Promise<{ transactionHash: Hex }> {
   const res = await sendBundlerRequest({
@@ -264,10 +277,6 @@ async function sendBundlerRequest(args: {
 }) {
   const { options, operation, params } = args;
 
-  if (DEBUG) {
-    console.debug(`>>> sending ${operation} with payload:`, params);
-  }
-
   const bundlerUrl = options.bundlerUrl ?? getDefaultBundlerUrl(options.chain);
   const fetchWithHeaders = getClientFetch(options.client);
   const response = await fetchWithHeaders(bundlerUrl, {
@@ -287,7 +296,7 @@ async function sendBundlerRequest(args: {
   if (!response.ok || res.error) {
     let error = res.error || response.statusText;
     if (typeof error === "object") {
-      error = JSON.stringify(error);
+      error = stringify(error);
     }
     const code = res.code || "UNKNOWN";
 
@@ -296,10 +305,6 @@ async function sendBundlerRequest(args: {
 Status: ${response.status}
 Code: ${code}`,
     );
-  }
-
-  if (DEBUG) {
-    console.debug(`<<< ${operation} result:`, res);
   }
 
   return res.result;

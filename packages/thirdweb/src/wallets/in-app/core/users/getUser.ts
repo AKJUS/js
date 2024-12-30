@@ -16,7 +16,7 @@ export type GetUserResult = {
 
 /**
  * Gets user based on the provided query parameters.
- * @note This function is only available on the server (a secret key is required in the client).
+ *  This function is only available on the server (a secret key is required in the client).
  *
  * @param options - The options for the get user function.
  * @param options.client - The Thirdweb client with a secret key included.
@@ -113,7 +113,12 @@ export async function getUser({
       email: item.email,
       phone: item.phone,
       createdAt: item.createdAt,
-      profiles: item.linkedAccounts,
+      profiles: item.linkedAccounts.map((profile) => {
+        return {
+          type: (profile.type as string) === "siwe" ? "wallet" : profile.type,
+          details: profile.details,
+        };
+      }),
     }))[0] || null
   );
 }

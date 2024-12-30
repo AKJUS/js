@@ -27,6 +27,7 @@ export { useCallsStatus } from "../react/core/hooks/wallets/useCallsStatus.js";
 export { useWalletBalance } from "../react/core/hooks/others/useWalletBalance.js";
 export { useProfiles } from "../react/native/hooks/wallets/useProfiles.js";
 export { useLinkProfile } from "../react/native/hooks/wallets/useLinkProfile.js";
+export { useUnlinkProfile } from "../react/native/hooks/wallets/useUnlinkProfile.js";
 
 // contract
 export { useReadContract } from "../react/core/hooks/contract/useReadContract.js";
@@ -34,9 +35,9 @@ export { useWaitForReceipt } from "../react/core/hooks/contract/useWaitForReceip
 export { useContractEvents } from "../react/core/hooks/contract/useContractEvents.js";
 
 // transaction
-export {
-  type SendTransactionConfig,
-  type SendTransactionPayModalConfig,
+export type {
+  SendTransactionConfig,
+  SendTransactionPayModalConfig,
 } from "../react/core/hooks/transaction/useSendTransaction.js";
 export { useSimulateTransaction } from "../react/core/hooks/transaction/useSimulateTransaction.js";
 export { useSendTransaction } from "../react/native/hooks/transaction/useSendTransaction.js";

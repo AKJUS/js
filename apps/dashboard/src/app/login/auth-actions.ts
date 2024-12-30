@@ -43,7 +43,19 @@ export async function doLogin(payload: VerifyLoginPayloadParams) {
     throw new Error("API_SERVER_SECRET is not set");
   }
 
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
+  const utmCookies = cookieStore
+    .getAll()
+    .filter((cookie) => {
+      return cookie.name.startsWith("utm_");
+    })
+    .reduce(
+      (acc, cookie) => {
+        acc[cookie.name] = cookie.value;
+        return acc;
+      },
+      {} as Record<string, string>,
+    );
 
   // forward the request to the API server
   const res = await fetch(`${API_SERVER_URL}/v2/siwe/login`, {
@@ -53,7 +65,7 @@ export async function doLogin(payload: VerifyLoginPayloadParams) {
       "x-service-api-key": THIRDWEB_API_SECRET,
     },
     // set the createAccount flag to true to create a new account if it does not exist
-    body: JSON.stringify({ ...payload, createAccount: true }),
+    body: JSON.stringify({ ...payload, createAccount: true, utm: utmCookies }),
   });
 
   // if the request failed, log the error and throw an error
@@ -121,7 +133,7 @@ export async function doLogin(payload: VerifyLoginPayloadParams) {
 }
 
 export async function doLogout() {
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   // delete all cookies that start with the token prefix
   const allCookies = cookieStore.getAll();
   for (const cookie of allCookies) {
@@ -135,7 +147,7 @@ export async function doLogout() {
 
 export async function isLoggedIn(address: string) {
   const cookieName = COOKIE_PREFIX_TOKEN + getAddress(address);
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   // check if we have an access token
   const token = cookieStore.get(cookieName)?.value;
   if (!token) {

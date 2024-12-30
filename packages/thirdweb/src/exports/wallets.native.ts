@@ -89,7 +89,13 @@ export type {
    * @deprecated use InAppWalletSocialAuth instead
    */
   InAppWalletSocialAuth as EmbeddedWalletSocialAuth,
+  InAppWalletCreationOptions,
 } from "../wallets/in-app/core/wallet/types.js";
+
+export type {
+  MultiStepAuthArgsType,
+  SingleStepAuthArgsType,
+} from "../wallets/in-app/core/authentication/types.js";
 
 export {
   preAuthenticate,
@@ -98,6 +104,7 @@ export {
   getUserPhoneNumber,
   getProfiles,
   linkProfile,
+  unlinkProfile,
 } from "../wallets/in-app/native/auth/index.js";
 export type { Profile } from "../wallets/in-app/core/authentication/types.js";
 export const authenticateWithRedirect = () => {
@@ -107,7 +114,7 @@ export const authenticateWithRedirect = () => {
 export type {
   CoinbaseWalletCreationOptions,
   CoinbaseSDKWalletConnectionOptions,
-} from "../wallets/coinbase/coinbaseWebSDK.js";
+} from "../wallets/coinbase/coinbase-web.js";
 
 export type {
   WalletEmitter,
@@ -116,7 +123,7 @@ export type {
 
 export { getAllWalletsList } from "../wallets/getAllWalletsList.js";
 export { getWalletInfo } from "../wallets/__generated__/getWalletInfo.js";
-export { type WalletInfo } from "../wallets/wallet-info.js";
+export type { WalletInfo } from "../wallets/wallet-info.js";
 
 export { createWalletAdapter } from "../adapters/wallet-adapter.js";
 export type { AdapterWalletOptions } from "../adapters/wallet-adapter.js";
@@ -133,6 +140,9 @@ export type {
   WalletConnectClient,
   WalletConnectSession,
 } from "../wallets/wallet-connect/receiver/types.js";
+
+// eip1193
+export * as EIP1193 from "../adapters/eip1193/index.js";
 
 // NOT SUPPORTED
 

@@ -1,4 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
+import type { ThirdwebClient } from "../../../../client/client.js";
+import { resolveScheme } from "../../../../utils/ipfs.js";
 import { nativeLocalStorage } from "../../../../utils/storage/nativeStorage.js";
 import { getWalletInfo } from "../../../../wallets/__generated__/getWalletInfo.js";
 import type { Wallet } from "../../../../wallets/interfaces/wallet.js";
@@ -11,12 +13,15 @@ import {
   EMAIL_ICON,
   FACEBOOK_ICON,
   FARCASTER_ICON,
+  GITHUB_ICON,
   GOOGLE_ICON,
   GUEST_ICON,
   LINE_ICON,
   PASSKEY_ICON,
   PHONE_ICON,
+  STEAM_ICON,
   TELEGRAM_ICON,
+  TWITCH_ICON,
   WALLET_ICON,
   X_ICON,
 } from "../icons/svgs.js";
@@ -25,10 +30,11 @@ import { RNImage } from "./RNImage.js";
 export const WalletImage = (props: {
   theme: Theme;
   wallet: Wallet;
+  client: ThirdwebClient;
   size: number;
   avatar?: string | null;
 }) => {
-  const { wallet, avatar, size } = props;
+  const { wallet, avatar, size, client } = props;
 
   const { data: imageData } = useQuery({
     queryKey: ["wallet-image", wallet.id, wallet.getAccount()?.address],
@@ -55,7 +61,9 @@ export const WalletImage = (props: {
       try {
         const externalWalletImage = await getWalletInfo(activeEOAId, true);
         if (externalWalletImage) {
-          return externalWalletImage;
+          return externalWalletImage.startsWith("ipfs://")
+            ? resolveScheme({ client, uri: externalWalletImage })
+            : externalWalletImage;
         }
       } catch {}
 
@@ -99,6 +107,12 @@ export function getAuthProviderImage(authProvider: string | null): string {
       return FARCASTER_ICON;
     case "telegram":
       return TELEGRAM_ICON;
+    case "github":
+      return GITHUB_ICON;
+    case "twitch":
+      return TWITCH_ICON;
+    case "steam":
+      return STEAM_ICON;
     case "guest":
       return GUEST_ICON;
     default:

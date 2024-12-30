@@ -7,7 +7,7 @@ import { DailyConnectionsChartCard } from "./DailyConnectionsChartCard";
 import { createWalletStatsStub } from "./storyUtils";
 
 const meta = {
-  title: "Charts/Connect/DailyConnections",
+  title: "Charts/Connect/Daily Connections",
   component: Component,
   parameters: {
     layout: "centered",

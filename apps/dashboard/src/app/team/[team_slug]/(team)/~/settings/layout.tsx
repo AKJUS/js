@@ -1,18 +1,28 @@
 import { getTeamBySlug } from "@/api/team";
-import { notFound } from "next/navigation";
+import { redirect } from "next/navigation";
+import { getValidAccount } from "../../../../../account/settings/getAccount";
 import { SettingsLayout } from "./SettingsLayout";
 
 export default async function Layout(props: {
-  params: {
+  params: Promise<{
     team_slug: string;
-  };
+  }>;
   children: React.ReactNode;
 }) {
-  const team = await getTeamBySlug(props.params.team_slug);
+  const params = await props.params;
+
+  const [account, team] = await Promise.all([
+    getValidAccount(`/team/${params.team_slug}/~/settings`),
+    getTeamBySlug(params.team_slug),
+  ]);
 
   if (!team) {
-    notFound();
+    redirect("/team");
   }
 
-  return <SettingsLayout team={team}>{props.children}</SettingsLayout>;
+  return (
+    <SettingsLayout team={team} account={account}>
+      {props.children}
+    </SettingsLayout>
+  );
 }

@@ -1,13 +1,13 @@
 // TODO: figure out how to define the type without tuple args type and using function overloads
 
 import { Linking } from "react-native";
-import { trackConnect } from "../../analytics/track.js";
+import { trackConnect } from "../../analytics/track/connect.js";
 import type { Chain } from "../../chains/types.js";
 import { getCachedChainIfExists } from "../../chains/utils.js";
 import { nativeLocalStorage } from "../../utils/storage/nativeStorage.js";
 import type { WCSupportedWalletIds } from "../__generated__/wallet-ids.js";
+import { getCoinbaseMobileProvider } from "../coinbase/coinbase-mobile.js";
 import { coinbaseWalletSDK } from "../coinbase/coinbase-wallet.js";
-import { getCoinbaseMobileProvider } from "../coinbase/coinbaseMobileSDK.js";
 import { COINBASE } from "../constants.js";
 import { isEcosystemWallet } from "../ecosystem/is-ecosystem-wallet.js";
 import { ecosystemWallet } from "../in-app/native/ecosystem.js";
@@ -169,6 +169,7 @@ export function createWallet<const ID extends WalletId>(
               client: options.client,
               walletType: id,
               walletAddress: account.address,
+              chainId: chain.id,
             });
             // return account
             return account;
@@ -202,6 +203,7 @@ export function createWallet<const ID extends WalletId>(
               client: wcOptions.client,
               walletType: id,
               walletAddress: account.address,
+              chainId: chain.id,
             });
             return account;
           }

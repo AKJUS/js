@@ -1,3 +1,5 @@
+"use client";
+
 import { Box, Container, Flex, useBreakpointValue } from "@chakra-ui/react";
 import { useScrollPosition } from "@n8tb1t/use-scroll-position";
 import { Logo } from "components/logo";
@@ -51,7 +53,7 @@ export const HomepageTopNav: React.FC = () => {
           <Logo forceShowWordMark color="#fff" />
         </TrackedLink>
         <DesktopMenu />
-        <MobileMenu display={{ base: "inherit", xl: "none" }} />
+        <MobileMenu />
       </Container>
     </Box>
   );

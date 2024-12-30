@@ -19,6 +19,10 @@ import type { FetchDeployMetadataResult } from "../../utils/any-evm/deploy-metad
 import type { Hex } from "../../utils/encoding/hex.js";
 import type { Account } from "../../wallets/interfaces/wallet.js";
 import { getAllDefaultConstructorParamsForImplementation } from "./get-required-transactions.js";
+import {
+  type ImplementationConstructorParam,
+  processRefDeployments,
+} from "./process-ref-deployments.js";
 
 /**
  * @extension DEPLOY
@@ -105,8 +109,9 @@ export async function deployPublishedContract(
     chain,
     deployMetadata,
     client,
-    initializeParams: contractParams,
-    implementationConstructorParams,
+    initializeParams: contractParams || deployMetadata.constructorParams,
+    implementationConstructorParams:
+      implementationConstructorParams || deployMetadata.implConstructorParams,
     salt,
   });
 }
@@ -144,6 +149,38 @@ export async function deployContractfromDeployMetadata(
     modules,
     salt,
   } = options;
+
+  let processedImplParams: Record<string, string | string[]> | undefined;
+  let processedInitializeParams: Record<string, string | string[]> | undefined;
+
+  if (implementationConstructorParams) {
+    processedImplParams = {};
+    for (const key in implementationConstructorParams) {
+      processedImplParams[key] = await processRefDeployments({
+        client,
+        account,
+        chain,
+        paramValue: implementationConstructorParams[key] as
+          | string
+          | ImplementationConstructorParam,
+      });
+    }
+  }
+
+  if (initializeParams) {
+    processedInitializeParams = {};
+    for (const key in initializeParams) {
+      processedInitializeParams[key] = await processRefDeployments({
+        client,
+        account,
+        chain,
+        paramValue: initializeParams[key] as
+          | string
+          | ImplementationConstructorParam,
+      });
+    }
+  }
+
   switch (deployMetadata?.deployType) {
     case "standard": {
       return directDeploy({
@@ -151,7 +188,7 @@ export async function deployContractfromDeployMetadata(
         client,
         chain,
         compilerMetadata: deployMetadata,
-        contractParams: initializeParams,
+        contractParams: processedInitializeParams,
         salt,
       });
     }
@@ -170,7 +207,7 @@ export async function deployContractfromDeployMetadata(
           account,
           contractId: deployMetadata.name,
           constructorParams:
-            implementationConstructorParams ||
+            processedImplParams ||
             (await getAllDefaultConstructorParamsForImplementation({
               chain,
               client,
@@ -183,7 +220,7 @@ export async function deployContractfromDeployMetadata(
         chain,
         deployMetadata: deployMetadata,
         implementationContract,
-        initializeParams,
+        initializeParams: processedInitializeParams,
         account,
         modules,
       });
@@ -239,7 +276,7 @@ export async function deployContractfromDeployMetadata(
         client,
         chain,
         compilerMetadata: deployMetadata,
-        contractParams: initializeParams,
+        contractParams: processedInitializeParams,
         salt,
       });
     }
@@ -278,7 +315,22 @@ async function directDeploy(options: {
   });
 }
 
-async function getInitializeTransaction(options: {
+/**
+ * Prepares the initialization transaction for a contract deployment
+ * @param options - The options for generating the initialize transaction
+ * @param options.client - The ThirdwebClient instance
+ * @param options.chain - The blockchain network configuration
+ * @param options.account - The account performing the initialization
+ * @param options.implementationContract - The contract implementation to initialize
+ * @param options.deployMetadata - The metadata for the contract deployment
+ * @param options.initializeParams - Optional parameters to pass to the initialize function
+ * @param options.modules - Optional array of modules to install during initialization
+ * @param options.modules[].deployMetadata - The metadata for the module contract
+ * @param options.modules[].initializeParams - Optional parameters for module initialization
+ * @returns The prepared transaction for contract initialization
+ * @contract
+ */
+export async function getInitializeTransaction(options: {
   client: ThirdwebClient;
   chain: Chain;
   account: Account;

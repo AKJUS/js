@@ -1,5 +1,5 @@
 import type { Prettify } from "../../utils/type-utils.js";
-import { isCoinbaseSDKWallet } from "../coinbase/coinbaseWebSDK.js";
+import { isCoinbaseSDKWallet } from "../coinbase/coinbase-web.js";
 import { isInAppWallet } from "../in-app/core/wallet/index.js";
 import { getInjectedProvider } from "../injected/index.js";
 import type { Wallet } from "../interfaces/wallet.js";
@@ -19,7 +19,7 @@ export type GetCapabilitiesResult = Prettify<
 /**
  * Get the capabilities of a wallet based on the [EIP-5792](https://eips.ethereum.org/EIPS/eip-5792) specification.
  *
- * @note This function is dependent on the wallet's support for EIP-5792, but will not throw.
+ *  This function is dependent on the wallet's support for EIP-5792, but will not throw.
  * **The returned object contains a `message` field detailing any issues with the wallet's support for EIP-5792.**
  *
  * @param {GetCapabilitiesOptions} options
@@ -62,7 +62,7 @@ export async function getCapabilities<const ID extends WalletId = WalletId>({
 
   if (isCoinbaseSDKWallet(wallet)) {
     const { coinbaseSDKWalletGetCapabilities } = await import(
-      "../coinbase/coinbaseWebSDK.js"
+      "../coinbase/coinbase-web.js"
     );
     return coinbaseSDKWalletGetCapabilities({ wallet });
   }

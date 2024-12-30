@@ -1,6 +1,6 @@
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { type BillingCredit, useAccount } from "@3rdweb-sdk/react/hooks/useApi";
+import type { Account, BillingCredit } from "@3rdweb-sdk/react/hooks/useApi";
 import { ChainIcon } from "components/icons/ChainIcon";
 import { formatDistance } from "date-fns";
 import { useTrack } from "hooks/analytics/useTrack";
@@ -8,24 +8,25 @@ import { useLocalStorage } from "hooks/useLocalStorage";
 import { CircleAlertIcon } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { formatToDollars } from "./CreditsButton";
+import { formatToDollars } from "./formatToDollars";
 
 interface CreditsItemProps {
   credit?: BillingCredit;
   isOpCreditDefault?: boolean;
   onClickApply?: () => void;
+  twAccount: Account;
 }
 
 export const CreditsItem: React.FC<CreditsItemProps> = ({
   credit,
   isOpCreditDefault,
   onClickApply,
+  twAccount,
 }) => {
   const trackEvent = useTrack();
-  const account = useAccount();
 
   const [hasAppliedForOpGrant] = useLocalStorage(
-    `appliedForOpGrant-${account?.data?.id || ""}`,
+    `appliedForOpGrant-${twAccount.id}`,
     false,
   );
 
@@ -43,14 +44,14 @@ export const CreditsItem: React.FC<CreditsItemProps> = ({
   }
 
   return (
-    <div className="flex flex-col gap-2 rounded-lg border border-border bg-muted/50 p-4">
+    <div className="flex flex-col gap-2 rounded-lg border border-border bg-muted/50 p-4 lg:p-6">
       <div className="relative">
         <div className="absolute top-0 right-0">
           {isOpCredit ? (
             <ChainIcon
               ipfsSrc=// Hard-coded here to remove @thirdweb dev/chains
               "ipfs://QmcxZHpyJa8T4i63xqjPYrZ6tKrt55tZJpbXcjSDKuKaf9/optimism/512.png"
-              size={24}
+              className="size-6"
             />
           ) : isTwCredit ? (
             <Image
@@ -69,10 +70,12 @@ export const CreditsItem: React.FC<CreditsItemProps> = ({
           ) : null}
         </div>
 
-        <h3 className="text-foreground">{creditTitle}</h3>
+        <h3 className="text-foreground text-xl tracking-tight">
+          {creditTitle}
+        </h3>
       </div>
 
-      <div className="flex gap-4">
+      <div className="mt-1 flex gap-6">
         <div>
           <h4 className="font-medium text-muted-foreground text-sm">
             Remaining Credits
@@ -124,7 +127,7 @@ export const CreditsItem: React.FC<CreditsItemProps> = ({
         {!hasAppliedForOpGrant && isOpCredit && (
           <Button asChild size="sm" variant="outline" className="bg-background">
             <Link
-              href="/dashboard/settings/gas-credits"
+              href="/team/~/~/settings/credits"
               onClick={() => {
                 trackEvent({
                   category: "op-sponsorship",

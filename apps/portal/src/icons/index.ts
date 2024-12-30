@@ -17,6 +17,7 @@ export { ContractPublishIcon } from "./products/contracts/ContractPublishIcon";
 export { InfraEngineIcon } from "./products/infra/InfraEngineIcon";
 export { InfraRPCIcon } from "./products/infra/InfraRPCIcon";
 export { InfraStorageIcon } from "./products/infra/InfraStorageIcon";
+export { InfraInsightIcon } from "./products/infra/InfraInsightIcon";
 // // payments
 export { PaymentsNFTCheckoutIcon } from "./products/payments/PaymentsNFTCheckoutIcon";
 export { PaymentsSponsoredIcon } from "./products/payments/PaymentsSponsoredIcon";
@@ -28,8 +29,22 @@ export { WalletsAuthIcon } from "./products/wallets/WalletsAuthIcon";
 export { WalletsConnectIcon } from "./products/wallets/WalletsConnectIcon";
 export { WalletsInAppIcon } from "./products/wallets/WalletsInAppIcon";
 export { WalletsSmartIcon } from "./products/wallets/WalletsSmartIcon";
+//nebula
+export { NebulaIcon } from "./products/nebula/NebulaIcon";
 // solutions
 export { GamingIcon } from "./solutions/GamingIcon";
+
+//sidebar
+export { EditIcon } from "./sidebar/EditIcon";
+export { CodeIcon } from "./sidebar/CodeIcon";
+export { BrickIcon } from "./sidebar/BrickIcon";
+export { QuestionIcon } from "./sidebar/QuestionIcon";
+export { NebulaSideIcon } from "./sidebar/NebulaSideIcon";
+export { PluginIcon } from "./sidebar/PluginIcon";
+export { TroubleshootIcon } from "./sidebar/TroubleshootIcon";
+
+//api icons
+export { GetIcon } from "./API/GetIcon";
 
 // general purposes
 export { ExternalLinkIcon } from "./ExternalLinkIcon";

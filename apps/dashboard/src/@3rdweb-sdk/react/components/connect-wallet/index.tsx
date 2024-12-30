@@ -1,6 +1,5 @@
 "use client";
 
-import { Spinner } from "@/components/ui/Spinner/Spinner";
 import { Button } from "@/components/ui/button";
 import { useThirdwebClient } from "@/constants/thirdweb.client";
 import { useStore } from "@/lib/reactive";
@@ -15,12 +14,13 @@ import { usePathname } from "next/navigation";
 import { useCallback, useMemo, useState } from "react";
 import type { Chain } from "thirdweb";
 import {
-  AutoConnect,
   ConnectButton,
   type NetworkSelectorProps,
+  useActiveAccount,
   useConnectModal,
 } from "thirdweb/react";
 import { useFavoriteChainIds } from "../../../../app/(dashboard)/(chain)/components/client/star-button";
+import { doLogout } from "../../../../app/login/auth-actions";
 import { LazyConfigureNetworkModal } from "../../../../components/configure-networks/LazyConfigureNetworkModal";
 import { useAllChainsData } from "../../../../hooks/chains/allChains";
 import {
@@ -28,13 +28,15 @@ import {
   addRecentlyUsedChainId,
   recentlyUsedChainIdsStore,
 } from "../../../../stores/chainStores";
-import { useLoggedInUser } from "../../hooks/useLoggedInUser";
 import { popularChains } from "../popularChains";
 
 export const CustomConnectWallet = (props: {
   loginRequired?: boolean;
   connectButtonClassName?: string;
+  signInLinkButtonClassName?: string;
   detailsButtonClassName?: string;
+  chain?: Chain;
+  isLoggedIn: boolean;
 }) => {
   const thirdwebClient = useThirdwebClient();
   const loginRequired =
@@ -46,12 +48,7 @@ export const CustomConnectWallet = (props: {
   // chains
   const favChainIdsQuery = useFavoriteChainIds();
   const recentChainIds = useStore(recentlyUsedChainIdsStore);
-  const { idToChain, allChains } = useAllChainsData();
-
-  const allChainsWithMetadata = useMemo(
-    () => allChains.map(mapV4ChainToV5Chain),
-    [allChains],
-  );
+  const { idToChain, allChainsV5 } = useAllChainsData();
 
   const recentlyUsedChainsWithMetadata = useMemo(
     () =>
@@ -116,33 +113,25 @@ export const CustomConnectWallet = (props: {
   ]);
 
   // ensures login status on pages that need it
-  const { isPending, isLoggedIn } = useLoggedInUser();
+  const { isLoggedIn } = props;
   const pathname = usePathname();
+  const account = useActiveAccount();
 
-  if (isPending) {
+  if ((!isLoggedIn || !account) && loginRequired) {
     return (
       <>
-        <div className="flex h-[48px] w-[144px] items-center justify-center rounded-lg border border-border bg-muted">
-          <Spinner className="size-4" />
-        </div>
-        {/* need auto connect here so that we actually connect */}
-        <AutoConnect client={thirdwebClient} />
-      </>
-    );
-  }
-
-  if (!isLoggedIn && loginRequired) {
-    return (
-      <>
-        <Button asChild variant="default" className="gap-2" size="lg">
+        <Button
+          asChild
+          variant="default"
+          className={props.signInLinkButtonClassName}
+          size="lg"
+        >
           <Link
             href={`/login${pathname ? `?next=${encodeURIComponent(pathname)}` : ""}`}
           >
-            Sign In
+            Connect Wallet
           </Link>
         </Button>
-        {/* need auto connect here so that we actually connect */}
-        <AutoConnect client={thirdwebClient} />
       </>
     );
   }
@@ -153,8 +142,8 @@ export const CustomConnectWallet = (props: {
         theme={getSDKTheme(t)}
         client={thirdwebClient}
         connectModal={{
-          privacyPolicyUrl: "/privacy",
-          termsOfServiceUrl: "/tos",
+          privacyPolicyUrl: "/privacy-policy",
+          termsOfServiceUrl: "/terms",
           showThirdwebBranding: false,
           welcomeScreen: () => <ConnectWalletWelcomeScreen theme={t} />,
         }}
@@ -165,10 +154,7 @@ export const CustomConnectWallet = (props: {
         }}
         onDisconnect={async () => {
           try {
-            // log out the user
-            await fetch("/api/auth/logout", {
-              method: "POST",
-            });
+            await doLogout();
           } catch (err) {
             console.error("Failed to log out", err);
           }
@@ -179,7 +165,7 @@ export const CustomConnectWallet = (props: {
         detailsButton={{
           className: props.detailsButtonClassName,
         }}
-        chains={allChainsWithMetadata}
+        chains={allChainsV5}
         detailsModal={{
           networkSelector: {
             sections: chainSections,
@@ -203,6 +189,7 @@ export const CustomConnectWallet = (props: {
             },
           },
         }}
+        chain={props.chain}
       />
 
       <LazyConfigureNetworkModal
@@ -300,8 +287,8 @@ export function useCustomConnectModal() {
           url: "https://thirdweb.com",
         },
         chain: options?.chain,
-        privacyPolicyUrl: "/privacy",
-        termsOfServiceUrl: "/tos",
+        privacyPolicyUrl: "/privacy-policy",
+        termsOfServiceUrl: "/terms",
         showThirdwebBranding: false,
         welcomeScreen: () => (
           <ConnectWalletWelcomeScreen

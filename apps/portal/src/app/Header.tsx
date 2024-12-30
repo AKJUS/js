@@ -1,21 +1,20 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import clsx from "clsx";
-import { ChevronDownIcon, Menu } from "lucide-react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-
 import { DocSearch } from "@/components/others/DocSearch";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import clsx from "clsx";
+import { ChevronDownIcon, Menu } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { FaGithub } from "react-icons/fa";
+import { GithubIcon } from "../components/Document/GithubButtonLink";
 import { CustomAccordion } from "../components/others/CustomAccordion";
 import { ThemeSwitcher } from "../components/others/theme/ThemeSwitcher";
 import { ThirdwebIcon } from "../icons/thirdweb";
@@ -28,6 +27,14 @@ const links = [
   {
     name: "Contracts",
     href: "/contracts",
+  },
+  {
+    name: "Insight",
+    href: "/insight",
+  },
+  {
+    name: "Nebula",
+    href: "/nebula",
   },
 ];
 
@@ -99,8 +106,12 @@ export const connectLinks = [
 
 const supportLinks = [
   {
-    name: "Support Site",
+    name: "Get thirdweb support",
     href: "https://thirdweb.com/support",
+  },
+  {
+    name: "Knowledge Base",
+    href: "https://support.thirdweb.com",
   },
   {
     name: "Contact Sales",
@@ -136,7 +147,7 @@ export function Header() {
             target="_blank"
             className="text-f-100"
           >
-            <FaGithub className="mx-3 size-6" />
+            <GithubIcon className="mx-3 size-6" />
           </Link>
 
           {/* Mobile burger menu */}
@@ -218,7 +229,7 @@ export function Header() {
               target="_blank"
               className="hidden text-f-300 transition-colors hover:text-f-100 xl:block"
             >
-              <FaGithub className="mx-2 size-6" />
+              <GithubIcon className="mx-2 size-6" />
             </Link>
           </div>
         </nav>

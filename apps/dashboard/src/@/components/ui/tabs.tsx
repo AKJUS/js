@@ -87,6 +87,8 @@ export function TabButtons(props: {
   tabContainerClassName?: string;
   containerClassName?: string;
   shadowColor?: string;
+  tabIconClassName?: string;
+  hideBottomLine?: boolean;
 }) {
   const { containerRef, lineRef, activeTabRef } =
     useUnderline<HTMLButtonElement>();
@@ -94,7 +96,9 @@ export function TabButtons(props: {
   return (
     <div className={cn("relative", props.containerClassName)}>
       {/* Bottom line */}
-      <div className="absolute right-0 bottom-0 left-0 h-[1px] bg-border" />
+      {!props.hideBottomLine && (
+        <div className="absolute right-0 bottom-0 left-0 h-[1px] bg-border" />
+      )}
 
       <ScrollShadow
         scrollableClassName="pb-[8px] relative"
@@ -120,7 +124,9 @@ export function TabButtons(props: {
                 )}
                 onClick={tab.isEnabled ? tab.onClick : undefined}
               >
-                {tab.icon && <tab.icon className="size-6" />}
+                {tab.icon && (
+                  <tab.icon className={cn("size-6", props.tabIconClassName)} />
+                )}
                 {tab.name}
               </Button>
             );
@@ -165,10 +171,22 @@ function useUnderline<El extends HTMLElement>() {
     }
 
     update();
+    let resizeObserver: ResizeObserver | undefined = undefined;
+
+    if (containerRef.current) {
+      resizeObserver = new ResizeObserver(() => {
+        setTimeout(() => {
+          update();
+        }, 100);
+      });
+      resizeObserver.observe(containerRef.current);
+    }
+
     // add event listener for resize
     window.addEventListener("resize", update);
     return () => {
       window.removeEventListener("resize", update);
+      resizeObserver?.disconnect();
     };
   }, [activeTabEl]);
 
@@ -181,6 +199,7 @@ export function TabPathLinks(props: {
     path: string;
     exactMatch?: boolean;
     isDisabled?: boolean;
+    isActive?: (pathname: string) => boolean;
   }[];
   className?: string;
   tabContainerClassName?: string;
@@ -194,9 +213,12 @@ export function TabPathLinks(props: {
       links={links.map((l) => ({
         name: l.name,
         href: l.path,
-        isActive: l.exactMatch
-          ? pathname === l.path
-          : pathname.startsWith(l.path),
+        isActive: l.isActive
+          ? l.isActive(pathname)
+          : l.exactMatch
+            ? pathname === l.path
+            : pathname.startsWith(l.path),
+        isDisabled: l.isDisabled,
       }))}
     />
   );

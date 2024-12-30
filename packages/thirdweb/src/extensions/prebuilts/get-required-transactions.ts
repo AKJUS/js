@@ -3,6 +3,7 @@ import type { ThirdwebClient } from "../../client/client.js";
 import { getDeployedCreate2Factory } from "../../contract/deployment/utils/create-2-factory.js";
 import { getDeployedInfraContract } from "../../contract/deployment/utils/infra.js";
 import { getDeployedInfraContractFromMetadata } from "../../contract/deployment/utils/infra.js";
+import { ZKSYNC_WETH } from "../../contract/deployment/zksync/implementations.js";
 import { computePublishedContractAddress } from "../../utils/any-evm/compute-published-contract-address.js";
 import type { FetchDeployMetadataResult } from "../../utils/any-evm/deploy-metadata.js";
 import { isZkSyncChain } from "../../utils/any-evm/zksync/isZkSyncChain.js";
@@ -51,39 +52,43 @@ export async function getRequiredTransactions(
       | DeployTransactionResult[]
       | null
     )[] = await Promise.all([
-      getDeployedCreate2Factory({
-        chain,
-        client,
-      }).then((c) =>
-        c || isZkSync
-          ? null
-          : ({ type: "infra", contractId: "Create2Factory" } as const),
-      ),
-      getDeployedInfraContract({
-        chain,
-        client,
-        contractId: "Forwarder",
-      }).then((c) =>
-        c || isZkSync
-          ? null
-          : ({ type: "infra", contractId: "Forwarder" } as const),
-      ),
-      getDeployedInfraContract({
-        chain,
-        client,
-        contractId: "TWCloneFactory",
-        constructorParams: {
-          _trustedForwarder: await computePublishedContractAddress({
+      isZkSync
+        ? null
+        : getDeployedCreate2Factory({
+            chain,
+            client,
+          }).then((c) =>
+            c
+              ? null
+              : ({ type: "infra", contractId: "Create2Factory" } as const),
+          ),
+      isZkSync
+        ? null
+        : getDeployedInfraContract({
             chain,
             client,
             contractId: "Forwarder",
-          }),
-        },
-      }).then((c) =>
-        c || isZkSync
-          ? null
-          : ({ type: "infra", contractId: "TWCloneFactory" } as const),
-      ),
+          }).then((c) =>
+            c ? null : ({ type: "infra", contractId: "Forwarder" } as const),
+          ),
+      isZkSync
+        ? null
+        : getDeployedInfraContract({
+            chain,
+            client,
+            contractId: "TWCloneFactory",
+            constructorParams: {
+              _trustedForwarder: await computePublishedContractAddress({
+                chain,
+                client,
+                contractId: "Forwarder",
+              }),
+            },
+          }).then((c) =>
+            c
+              ? null
+              : ({ type: "infra", contractId: "TWCloneFactory" } as const),
+          ),
       // TODO (deploy): add WETH contract check for implementations that need it (check implementation constructor params)
       getTransactionsForImplementation({
         chain,
@@ -205,6 +210,17 @@ async function getTransactionsForMaketplaceV3(options: {
   return transactions;
 }
 
+/**
+ * Gets the default constructor parameters required for contract implementation deployment
+ * @param args - The arguments object
+ * @param args.chain - The blockchain network configuration
+ * @param args.client - The ThirdwebClient instance
+ * @returns An object containing default constructor parameters:
+ * - On zkSync chains: returns an empty object since no parameters are needed
+ * - On other chains: returns `trustedForwarder` and `nativeTokenWrapper` addresses
+ *
+ * @internal
+ */
 export async function getAllDefaultConstructorParamsForImplementation(args: {
   chain: Chain;
   client: ThirdwebClient;
@@ -212,8 +228,11 @@ export async function getAllDefaultConstructorParamsForImplementation(args: {
   const { chain, client } = args;
   const isZkSync = await isZkSyncChain(chain);
   if (isZkSync) {
-    // zksync contracts dont need these implementation constructor params
-    return {};
+    const weth = ZKSYNC_WETH[chain.id];
+
+    return {
+      nativeTokenWrapper: weth,
+    };
   }
   const [forwarder, weth] = await Promise.all([
     computePublishedContractAddress({

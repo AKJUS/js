@@ -1,9 +1,49 @@
-import type { ThirdwebContract } from "../../../contract/contract.js";
+import type { Chain } from "../../../chains/types.js";
+import type { ThirdwebClient } from "../../../client/client.js";
+import {
+  type ThirdwebContract,
+  getContract,
+} from "../../../contract/contract.js";
 import { prepareContractCall } from "../../../transaction/prepare-contract-call.js";
 import type { PreparedTransaction } from "../../../transaction/prepare-transaction.js";
 import { readContract } from "../../../transaction/read-contract.js";
 import { isHex, stringToHex } from "../../../utils/encoding/hex.js";
 import type { SendTransactionOption } from "../../interfaces/wallet.js";
+import { DEFAULT_ACCOUNT_FACTORY_V0_6 } from "./constants.js";
+
+/**
+ * Predict the address of a smart account.
+ * @param args - The options for predicting the address of a smart account.
+ * @returns The predicted address of the smart account.
+ * @example
+ * ```ts
+ * import { predictSmartAccountAddress } from "thirdweb/wallets/smart";
+ *
+ * const predictedAddress = await predictSmartAccountAddress({
+ *  client,
+ *  chain,
+ *  adminAddress,
+ * });
+ * ```
+ * @walletUtils
+ */
+export async function predictSmartAccountAddress(args: {
+  client: ThirdwebClient;
+  chain: Chain;
+  adminAddress: string;
+  factoryAddress?: string;
+  accountSalt?: string;
+}): Promise<string> {
+  return predictAddress({
+    adminAddress: args.adminAddress,
+    accountSalt: args.accountSalt,
+    factoryContract: getContract({
+      address: args.factoryAddress ?? DEFAULT_ACCOUNT_FACTORY_V0_6,
+      chain: args.chain,
+      client: args.client,
+    }),
+  });
+}
 
 /**
  * Predict the address of a smart account.
@@ -20,11 +60,13 @@ import type { SendTransactionOption } from "../../interfaces/wallet.js";
  * });
  * ```
  * @walletUtils
+ * @deprecated Use `predictSmartAccountAddress` instead.
  */
 export async function predictAddress(args: {
   factoryContract: ThirdwebContract;
   predictAddressOverride?: (
     factoryContract: ThirdwebContract,
+    admin: string,
   ) => Promise<string>;
   adminAddress: string;
   accountSalt?: string;
@@ -38,7 +80,7 @@ export async function predictAddress(args: {
     accountAddress,
   } = args;
   if (predictAddress) {
-    return predictAddress(factoryContract);
+    return predictAddress(factoryContract, adminAddress);
   }
   if (accountAddress) {
     return accountAddress;
@@ -68,6 +110,7 @@ export function prepareCreateAccount(args: {
   accountSalt?: string;
   createAccountOverride?: (
     factoryContract: ThirdwebContract,
+    admin: string,
   ) => PreparedTransaction;
 }): PreparedTransaction {
   const {
@@ -77,7 +120,7 @@ export function prepareCreateAccount(args: {
     accountSalt,
   } = args;
   if (createAccount) {
-    return createAccount(factoryContract);
+    return createAccount(factoryContract, adminAddress);
   }
   const saltHex =
     accountSalt && isHex(accountSalt)

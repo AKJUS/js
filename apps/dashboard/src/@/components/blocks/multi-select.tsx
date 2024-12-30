@@ -59,6 +59,9 @@ export const MultiSelect = forwardRef<HTMLButtonElement, MultiSelectProps>(
       maxCount = Number.POSITIVE_INFINITY,
       className,
       selectedValues,
+      overrideSearchFn,
+      renderOption,
+      searchPlaceholder,
       ...props
     },
     ref,
@@ -105,8 +108,6 @@ export const MultiSelect = forwardRef<HTMLButtonElement, MultiSelectProps>(
     // show 50 initially and then 20 more when reaching the end
     const { itemsToShow, lastItemRef } = useShowMore<HTMLButtonElement>(50, 20);
 
-    const { overrideSearchFn } = props;
-
     const optionsToShow = useMemo(() => {
       const filteredOptions: {
         label: string;
@@ -119,13 +120,18 @@ export const MultiSelect = forwardRef<HTMLButtonElement, MultiSelectProps>(
         if (filteredOptions.length >= itemsToShow) {
           break;
         }
+        const option = options[i];
+        if (!option) {
+          continue;
+        }
+
         if (overrideSearchFn) {
-          if (overrideSearchFn(options[i], searchValLowercase)) {
-            filteredOptions.push(options[i]);
+          if (overrideSearchFn(option, searchValLowercase)) {
+            filteredOptions.push(option);
           }
         } else {
-          if (options[i].label.toLowerCase().includes(searchValLowercase)) {
-            filteredOptions.push(options[i]);
+          if (option.label.toLowerCase().includes(searchValLowercase)) {
+            filteredOptions.push(option);
           }
         }
       }
@@ -147,7 +153,7 @@ export const MultiSelect = forwardRef<HTMLButtonElement, MultiSelectProps>(
     }, [searchValue]);
 
     return (
-      <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
+      <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen} modal>
         <PopoverTrigger asChild>
           <Button
             ref={ref}
@@ -233,7 +239,7 @@ export const MultiSelect = forwardRef<HTMLButtonElement, MultiSelectProps>(
             {/* Search */}
             <div className="relative">
               <Input
-                placeholder={props.searchPlaceholder || "Search"}
+                placeholder={searchPlaceholder || "Search"}
                 value={searchValue}
                 onChange={(e) => setSearchValue(e.target.value)}
                 className="!h-auto rounded-b-none border-0 border-border border-b py-4 pl-10 focus-visible:ring-0 focus-visible:ring-offset-0"
@@ -280,9 +286,7 @@ export const MultiSelect = forwardRef<HTMLButtonElement, MultiSelectProps>(
                       </div>
 
                       <div className="min-w-0 grow">
-                        {props.renderOption
-                          ? props.renderOption(option)
-                          : option.label}
+                        {renderOption ? renderOption(option) : option.label}
                       </div>
                     </Button>
                   );
